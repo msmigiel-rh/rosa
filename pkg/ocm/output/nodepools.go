@@ -165,7 +165,7 @@ func PrintCapacityReservationDetails(capacityReservation *cmv1.AWSCapacityReserv
 	if marketType, ok := capacityReservation.GetMarketType(); ok {
 		details = append(details, fmt.Sprintf(" - Type:                               %s", marketType))
 	}
-	if preference, ok := capacityReservation.GetPreference(); ok {
+	if preference, ok := capacityReservation.GetPreference(); ok && preference != "" {
 		details = append(details, fmt.Sprintf(" - Preference:                         %s", preference))
 	}
 
