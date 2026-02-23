@@ -463,12 +463,10 @@ func run(cmd *cobra.Command, argv []string) {
 			getUseworkloadMonitoring(cluster.DisableUserWorkloadMonitoring()))
 	}
 
-	if cluster.FIPS() {
-		str = fmt.Sprintf("%s"+
-			"FIPS mode:                  %s\n",
-			str,
-			EnabledOutput)
-	}
+	str = fmt.Sprintf("%s"+
+		"FIPS mode:                  %s\n",
+		str,
+		getFipsStatus(cluster))
 	if detailsPage != "" {
 		str = fmt.Sprintf("%s"+
 			"Details Page:               %s%s\n", str,
@@ -1032,6 +1030,14 @@ func getEtcdStatus(cluster *cmv1.Cluster) string {
 		etcdStatus = EnabledOutput
 	}
 	return etcdStatus
+}
+
+func getFipsStatus(cluster *cmv1.Cluster) string {
+	fipsStatus := DisabledOutput
+	if cluster.FIPS() {
+		fipsStatus = EnabledOutput
+	}
+	return fipsStatus
 }
 
 func getRolePolicyBindings(roleARN string, rolePolicyDetails map[string][]aws.PolicyDetail,

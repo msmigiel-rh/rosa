@@ -602,7 +602,7 @@ var _ = Describe("Healthy check",
 
 					By("Check if fips is enabled")
 					if !profile.ClusterConfig.FIPS {
-						Expect(des.FIPSMod).To(Equal(""))
+						Expect(des.FIPSMod).To(Equal("Disabled"))
 					} else {
 						Expect(des.FIPSMod).To(Equal("Enabled"))
 					}
