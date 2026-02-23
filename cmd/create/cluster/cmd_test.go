@@ -69,14 +69,52 @@ var _ = Describe("Validate build command", func() {
 		})
 
 		When("--etcd-encryption is false", func() {
-			It("Does not print --etc-encryption-kms-arn", func() {
+			It("Does not print --etcd-encryption or --etcd-encryption-kms-arn", func() {
 				clusterConfig.EtcdEncryption = false
-				clusterConfig.EtcdEncryptionKMSArn = "my-test-arn"
 				command := buildCommand(clusterConfig, operatorRolesPrefix,
 					expectedOperatorRolePath, userSelectedAvailabilityZones,
 					defaultMachinePoolLabels, argsDotProperties)
 				Expect(command).To(Equal(
 					"rosa create cluster --cluster-name cluster-name --operator-roles-prefix prefix"))
+			})
+		})
+
+		When("--fips is true", func() {
+			It("prints --fips", func() {
+				clusterConfig.FIPS = true
+				command := buildCommand(clusterConfig, operatorRolesPrefix,
+					expectedOperatorRolePath, userSelectedAvailabilityZones,
+					defaultMachinePoolLabels, argsDotProperties)
+				Expect(command).To(Equal(
+					"rosa create cluster --cluster-name cluster-name --operator-roles-prefix prefix" +
+						" --fips"))
+			})
+		})
+
+		When("--fips is true and --etcd-encryption is true without kms arn", func() {
+			It("prints --fips but not --etcd-encryption", func() {
+				clusterConfig.FIPS = true
+				clusterConfig.EtcdEncryption = true
+				command := buildCommand(clusterConfig, operatorRolesPrefix,
+					expectedOperatorRolePath, userSelectedAvailabilityZones,
+					defaultMachinePoolLabels, argsDotProperties)
+				Expect(command).To(Equal(
+					"rosa create cluster --cluster-name cluster-name --operator-roles-prefix prefix" +
+						" --fips"))
+			})
+		})
+
+		When("--fips is true and --etcd-encryption-kms-arn is set", func() {
+			It("prints --fips and --etcd-encryption-kms-arn", func() {
+				clusterConfig.FIPS = true
+				clusterConfig.EtcdEncryption = true
+				clusterConfig.EtcdEncryptionKMSArn = "my-test-arn"
+				command := buildCommand(clusterConfig, operatorRolesPrefix,
+					expectedOperatorRolePath, userSelectedAvailabilityZones,
+					defaultMachinePoolLabels, argsDotProperties)
+				Expect(command).To(Equal(
+					"rosa create cluster --cluster-name cluster-name --operator-roles-prefix prefix" +
+						" --fips --etcd-encryption-kms-arn my-test-arn"))
 			})
 		})
 
