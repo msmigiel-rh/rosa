@@ -324,6 +324,29 @@ var _ = Describe("getZeroEgressStatus", func() {
 	})
 })
 
+var _ = Describe("getFipsStatus", func() {
+	It("Should return enabled when fips mode is enabled", func() {
+		mockCluster, err := cmv1.NewCluster().FIPS(true).Build()
+		Expect(err).NotTo(HaveOccurred())
+		output := getFipsStatus(mockCluster)
+		Expect(output).To(Equal(EnabledOutput))
+	})
+
+	It("Should return disabled when fips mode is disabled", func() {
+		mockCluster, err := cmv1.NewCluster().FIPS(false).Build()
+		Expect(err).NotTo(HaveOccurred())
+		output := getFipsStatus(mockCluster)
+		Expect(output).To(Equal(DisabledOutput))
+	})
+
+	It("Should return disabled when fips mode is not specified", func() {
+		mockCluster, err := cmv1.NewCluster().Build()
+		Expect(err).NotTo(HaveOccurred())
+		output := getFipsStatus(mockCluster)
+		Expect(output).To(Equal(DisabledOutput))
+	})
+})
+
 func printJson(cluster func() *cmv1.Cluster,
 	upgrade func() *cmv1.UpgradePolicy,
 	state func() *cmv1.UpgradePolicyState,
