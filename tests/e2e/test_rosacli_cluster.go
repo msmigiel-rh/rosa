@@ -882,8 +882,8 @@ var _ = Describe("Edit cluster validation should", labels.Feature.Cluster, func(
 
 			By("Edit cluster with invalid http_proxy not started with http")
 			invalidHTTPProxy := map[string]string{
-				"invalidvalue":           "ERR: Invalid http-proxy value 'invalidvalue'",
-				"https://test-proxy.com": "ERR: Expected http-proxy to have an http:// scheme",
+				"invalidvalue":           "ERR: invalid http-proxy value: URL is missing scheme",
+				"https://test-proxy.com": "ERR: expected 'http-proxy' to have an 'http://' scheme",
 			}
 			for illegalHttpProxy, errMessage := range invalidHTTPProxy {
 				output, err := clusterService.EditCluster(clusterID,
@@ -898,7 +898,7 @@ var _ = Describe("Edit cluster validation should", labels.Feature.Cluster, func(
 				"--https-proxy", "invalid",
 			)
 			Expect(err).To(HaveOccurred())
-			Expect(output.String()).Should(ContainSubstring(`ERR: parse "invalid": invalid URI for request`))
+			Expect(output.String()).Should(ContainSubstring("ERR: invalid https-proxy value: URL is missing scheme"))
 
 			By("Edit cluster with invalid no_proxy ")
 			output, err = clusterService.EditCluster(clusterID,
@@ -1867,7 +1867,7 @@ var _ = Describe("Create cluster with invalid options will",
 				)
 				Expect(err).To(HaveOccurred())
 				Expect(output.String()).Should(
-					ContainSubstring("The number of subnets for a 'multi-AZ' 'cluster' should be '6'," +
+					ContainSubstring("the number of subnets for a 'multi-AZ' 'cluster' should be '6'," +
 						" instead received: '1'"))
 
 				// Can only test when az number is bigger than 2
@@ -1910,7 +1910,7 @@ var _ = Describe("Create cluster with invalid options will",
 					)
 					Expect(err).To(HaveOccurred())
 					Expect(output.String()).Should(
-						ContainSubstring("The number of subnets for a 'multi-AZ' 'cluster' should be '6', instead received: '%d'",
+						ContainSubstring("the number of subnets for a 'multi-AZ' 'cluster' should be '6', instead received: '%d'",
 							len(fiveSubnetsList)))
 				}
 
@@ -2056,7 +2056,7 @@ var _ = Describe("Create cluster with invalid options will",
 					"--http-proxy", "invalid",
 				)
 				Expect(err).To(HaveOccurred())
-				Expect(output.String()).Should(ContainSubstring("Invalid http-proxy value 'invalid'"))
+				Expect(output.String()).Should(ContainSubstring("invalid http-proxy value: URL is missing scheme"))
 
 				By("Create ccs existing cluster with invalid http_proxy not started with http")
 				output, err = clusterService.CreateDryRun(clusterName,
@@ -2069,7 +2069,7 @@ var _ = Describe("Create cluster with invalid options will",
 				)
 				Expect(err).To(HaveOccurred())
 				Expect(output.String()).Should(
-					ContainSubstring("Invalid http-proxy value 'nohttp.prefix.com'"))
+					ContainSubstring("invalid http-proxy value: URL is missing scheme"))
 
 				By("Create ccs existing cluster with invalid https_proxy set")
 				output, err = clusterService.CreateDryRun(clusterName,
@@ -2082,7 +2082,7 @@ var _ = Describe("Create cluster with invalid options will",
 				)
 				Expect(err).To(HaveOccurred())
 				Expect(output.String()).Should(
-					ContainSubstring(`ERR: parse "invalid": invalid URI for request`))
+					ContainSubstring("ERR: invalid https-proxy value: URL is missing scheme"))
 
 				By("Create wide-proxy cluster with invalid additional_trust_bundle set")
 				tempDir, err := os.MkdirTemp("", "*")
