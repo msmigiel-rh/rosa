@@ -1,8 +1,15 @@
 package roles
 
 import (
+	"errors"
+
+	"go.uber.org/mock/gomock"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+
+	awsmock "github.com/openshift/rosa/pkg/aws"
 )
 
 var _ = Describe("generateClusterUpgradeInfo", func() {
@@ -18,3 +25,113 @@ var _ = Describe("generateClusterUpgradeInfo", func() {
 		Expect(info).To(Equal(expected))
 	})
 })
+
+var _ = Describe("syncAccountRoleVersionTagsForCluster", func() {
+	It("updates all account role tags when all account roles are present", func() {
+		ctrl := gomock.NewController(GinkgoT())
+		defer ctrl.Finish()
+
+		mockAwsClient := awsmock.NewMockClient(ctrl)
+		cluster := buildClusterForRoleTagSync(
+			"arn:aws:iam::123456789012:role/test-prefix-Installer-Role",
+			"arn:aws:iam::123456789012:role/test-prefix-Support-Role",
+			"arn:aws:iam::123456789012:role/test-prefix-ControlPlane-Role",
+			"arn:aws:iam::123456789012:role/test-prefix-Worker-Role",
+		)
+
+		updatedRoles := map[string]bool{}
+		mockAwsClient.EXPECT().UpdateTag(gomock.Any(), "4.17").DoAndReturn(
+			func(roleName, _ string) error {
+				updatedRoles[roleName] = true
+				return nil
+			},
+		).Times(4)
+
+		err := syncAccountRoleVersionTagsForCluster(mockAwsClient, cluster, "4.17")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(updatedRoles).To(HaveKey("test-prefix-Installer-Role"))
+		Expect(updatedRoles).To(HaveKey("test-prefix-Support-Role"))
+		Expect(updatedRoles).To(HaveKey("test-prefix-ControlPlane-Role"))
+		Expect(updatedRoles).To(HaveKey("test-prefix-Worker-Role"))
+	})
+
+	It("skips missing account roles", func() {
+		ctrl := gomock.NewController(GinkgoT())
+		defer ctrl.Finish()
+
+		mockAwsClient := awsmock.NewMockClient(ctrl)
+		cluster := buildClusterForRoleTagSync(
+			"arn:aws:iam::123456789012:role/test-prefix-Installer-Role",
+			"",
+			"",
+			"",
+		)
+
+		mockAwsClient.EXPECT().UpdateTag("test-prefix-Installer-Role", "4.17").Return(nil).Times(1)
+
+		err := syncAccountRoleVersionTagsForCluster(mockAwsClient, cluster, "4.17")
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	It("returns a wrapped error when role tag update fails", func() {
+		ctrl := gomock.NewController(GinkgoT())
+		defer ctrl.Finish()
+
+		mockAwsClient := awsmock.NewMockClient(ctrl)
+		cluster := buildClusterForRoleTagSync(
+			"arn:aws:iam::123456789012:role/test-prefix-Installer-Role",
+			"",
+			"",
+			"",
+		)
+
+		expectedErr := errors.New("failed to update tag")
+		mockAwsClient.EXPECT().UpdateTag("test-prefix-Installer-Role", "4.17").Return(expectedErr).Times(1)
+
+		err := syncAccountRoleVersionTagsForCluster(mockAwsClient, cluster, "4.17")
+		Expect(err).To(HaveOccurred())
+		Expect(err).To(MatchError(ContainSubstring(
+			"failed to update account role 'test-prefix-Installer-Role' version tag",
+		)))
+		Expect(errors.Is(err, expectedErr)).To(BeTrue())
+	})
+
+	It("returns an error when account role ARN cannot be parsed", func() {
+		ctrl := gomock.NewController(GinkgoT())
+		defer ctrl.Finish()
+
+		mockAwsClient := awsmock.NewMockClient(ctrl)
+		cluster := buildClusterForRoleTagSync(
+			"invalid-arn-installer",
+			"",
+			"",
+			"",
+		)
+
+		err := syncAccountRoleVersionTagsForCluster(mockAwsClient, cluster, "4.17")
+		Expect(err).To(HaveOccurred())
+	})
+})
+
+func buildClusterForRoleTagSync(installerRoleArn, supportRoleArn, masterRoleArn,
+	workerRoleArn string) *cmv1.Cluster {
+
+	clusterBuilder := cmv1.NewCluster().ID("test-cluster")
+	clusterBuilder.AWS(
+		cmv1.NewAWS().STS(
+			cmv1.NewSTS().
+				RoleARN(installerRoleArn).
+				SupportRoleARN(supportRoleArn).
+				InstanceIAMRoles(
+					cmv1.NewInstanceIAMRoles().
+						MasterRoleARN(masterRoleArn).
+						WorkerRoleARN(workerRoleArn),
+				),
+		),
+	)
+
+	cluster, err := clusterBuilder.Build()
+	Expect(err).ToNot(HaveOccurred())
+
+	return cluster
+}
