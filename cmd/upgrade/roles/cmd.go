@@ -264,6 +264,13 @@ func run(cmd *cobra.Command, argv []string) {
 	}
 
 	if !isUpgradeNeedForAccountRolePolicies {
+		if mode == interactive.ModeAuto {
+			err = syncAccountRoleVersionTagsForCluster(awsClient, cluster, policyVersion)
+			if err != nil {
+				reporter.Errorf("%s", err)
+				os.Exit(1)
+			}
+		}
 		reporter.Infof("Account roles/policies for cluster '%s' are already up-to-date.", r.ClusterKey)
 	} else {
 		accountRolePolicies, err := ocmClient.GetPolicies("")
@@ -503,6 +510,25 @@ func LogError(key string, ocmClient *ocm.Client, defaultPolicyVersion string, er
 			ocm.IsThrottle: "true",
 		})
 	}
+}
+
+func syncAccountRoleVersionTagsForCluster(awsClient aws.Client, cluster *v1.Cluster, policyVersion string) error {
+	for _, role := range aws.AccountRoles {
+		roleName, err := aws.GetAccountRoleName(cluster, role.Name)
+		if err != nil {
+			return err
+		}
+		if roleName == "" {
+			continue
+		}
+
+		err = awsClient.UpdateTag(roleName, policyVersion)
+		if err != nil {
+			return fmt.Errorf("failed to update account role '%s' version tag: %w", roleName, err)
+		}
+	}
+
+	return nil
 }
 
 func handleAccountRolePolicyARN(
