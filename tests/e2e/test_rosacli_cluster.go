@@ -31,6 +31,11 @@ import (
 	"github.com/openshift/rosa/tests/utils/log"
 )
 
+const (
+	UWMEnabled  = "Enabled"
+	UWMDisabled = "Disabled"
+)
+
 var _ = Describe("Edit cluster",
 	labels.Feature.Cluster,
 	func() {
@@ -295,10 +300,10 @@ var _ = Describe("Edit cluster",
 				clusterDetail, err := clusterService.ReflectClusterDescription(output)
 				Expect(err).ToNot(HaveOccurred())
 				// nolint
-				expectedUWMValue := "Enabled"
+				expectedUWMValue := UWMEnabled
 				recoverUWMStatus := false
 				if clusterConfig.DisableWorkloadMonitoring {
-					expectedUWMValue = "Disabled"
+					expectedUWMValue = UWMDisabled
 					recoverUWMStatus = true
 				}
 				Expect(clusterDetail.UserWorkloadMonitoring).To(Equal(expectedUWMValue))
@@ -322,7 +327,7 @@ var _ = Describe("Edit cluster",
 				Expect(clusterDetail.UserWorkloadMonitoring).To(Equal(expectedUWMValue))
 
 				By("Enable the UWM again")
-				expectedUWMValue = "Enabled"
+				expectedUWMValue = UWMEnabled
 				_, err = clusterService.EditCluster(clusterID,
 					"--disable-workload-monitoring=false",
 					"-y")
