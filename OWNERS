@@ -1,14 +1,14 @@
 reviewers:
 - olucasfreitas
-- hunterkepley
+- jerichokeyne
+- yuwang-RH
 approvers:
 - gdbranco
 - robpblake
 - jerichokeyne
 - davidleerh
-- hunterkepley
+- olucasfreitas
+- BraeTroutman
 - marcolan018
 - yuwang-RH
 - red-hat-konflux[bot]
-emeritus_approvers:
-- hunterkepley
