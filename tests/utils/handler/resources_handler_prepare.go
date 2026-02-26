@@ -365,6 +365,7 @@ func (rh *resourcesHandler) PrepareOCMRole(
 	ocmRole *rosacli.OCMRole, err error) {
 	// Assemble flags
 	var flags []string
+	var roleNameEnvInfix string
 	if path != "" {
 		flags = append(flags, "--path", path)
 	}
@@ -385,13 +386,18 @@ func (rh *resourcesHandler) PrepareOCMRole(
 	whoamiData := ocmResourceService.ReflectAccountsInfo(whoamiOutput)
 	ocmOrganizationExternalID := whoamiData.OCMOrganizationExternalID
 
+	if strings.Contains(whoamiData.OCMApi, "stage") {
+		roleNameEnvInfix = "stage"
+	} else if strings.Contains(whoamiData.OCMApi, "integration") {
+		roleNameEnvInfix = "int"
+	} else {
+		roleNameEnvInfix = "prod"
+	}
+
 	// Check if there's already an OCM role created that is already linked
 	ocmRoleList, output, err := ocmResourceService.ListOCMRole()
 	if err != nil {
 		err = fmt.Errorf("error happens when list ocm role before cluster preparation, %s", output.String())
-		return
-	}
-	if ocmRoleList.OCMRole(ocmRolePrefix, ocmOrganizationExternalID).Linded == "Yes" {
 		return
 	}
 	linkedRole := ocmRoleList.FindLinkedOCMRole()
@@ -419,6 +425,7 @@ func (rh *resourcesHandler) PrepareOCMRole(
 	}
 
 	// Create the actual OCM role
+	ocmRolePrefix = fmt.Sprintf("%s-%s", ocmRolePrefix, roleNameEnvInfix)
 	flags = append(flags, "--prefix", ocmRolePrefix, "--mode", "auto", "-y")
 	output, err = ocmResourceService.CreateOCMRole(
 		flags...,
@@ -448,6 +455,7 @@ func (rh *resourcesHandler) PrepareUserRole(
 	userole *rosacli.UserRole, err error) {
 	// Assemble creation flags
 	var flags []string
+	var roleNameEnvInfix string
 	if path != "" {
 		flags = append(flags, "--path", path)
 	}
@@ -476,6 +484,14 @@ func (rh *resourcesHandler) PrepareUserRole(
 	rh.rosaClient.Runner.UnsetFormat()
 	whoamiData := ocmResourceService.ReflectAccountsInfo(whoamiOutput)
 
+	if strings.Contains(whoamiData.OCMApi, "stage") {
+		roleNameEnvInfix = "stage"
+	} else if strings.Contains(whoamiData.OCMApi, "integration") {
+		roleNameEnvInfix = "int"
+	} else {
+		roleNameEnvInfix = "prod"
+	}
+
 	// Check if there's any linked user roles via the API
 	r := rosa.NewRuntime().WithAWS().WithOCM()
 	defer r.Cleanup()
@@ -496,6 +512,7 @@ func (rh *resourcesHandler) PrepareUserRole(
 
 	// Create the user role
 	ocmAccountUsername := whoamiData.OCMAccountUsername
+	userRolePrefix = fmt.Sprintf("%s-%s", userRolePrefix, roleNameEnvInfix)
 	flags = append(flags, "--prefix", userRolePrefix, "--mode", "auto", "-y")
 	output, err = ocmResourceService.CreateUserRole(
 		flags...,

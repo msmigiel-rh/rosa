@@ -8,7 +8,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	. "github.com/openshift/rosa/tests/utils/log"
+	log "github.com/openshift/rosa/tests/utils/log"
 )
 
 var RoleTypeSuffixMap = map[string]string{
@@ -342,7 +342,7 @@ func (url UserRoleList) UserRole(prefix string, ocmAccountUsername string) (user
 	userRoleName := fmt.Sprintf("%s-User-%s-Role", prefix, ocmAccountUsername)
 	for _, roleItme := range url.UserRoleList {
 		if roleItme.RoleName == userRoleName {
-			Logger.Infof("Find the userRole %s ~", userRoleName)
+			log.Logger.Infof("Find the userRole %s ~", userRoleName)
 			return roleItme
 		}
 	}
@@ -406,7 +406,7 @@ func (arl AccountRoleList) AccountRoles(prefix string) (accountRoles []*AccountR
 
 // Get all specified account roles by prefix and classic
 func (arl AccountRoleList) DigAccountRoles(prefix string, hcp bool) *AccountRolesUnit {
-	var accRoles *AccountRolesUnit = new(AccountRolesUnit)
+	accRoles := new(AccountRolesUnit)
 	roleMap := map[string]interface{}{}
 	matchedAccountRoles := arl.AccountRoles(prefix)
 	for _, role := range matchedAccountRoles {
@@ -525,11 +525,11 @@ func (ors *ocmResourceService) ReflectOCMRoleList(result bytes.Buffer) (orl OCMR
 }
 
 // Get specified ocm-role by ocm-role prefix and ocmOUsername
-func (url OCMRoleList) OCMRole(prefix string, ocmOrganizationExternalID string) (userRoles OCMRole) {
+func (url OCMRoleList) OCMRole(prefix string, ocmOrganizationExternalID string) (ocmRoles OCMRole) {
 	ocmRoleName := fmt.Sprintf("%s-OCM-Role-%s", prefix, ocmOrganizationExternalID)
 	for _, roleItme := range url.OCMRoleList {
 		if roleItme.RoleName == ocmRoleName {
-			Logger.Infof("Find the ocm Role %s ~", ocmRoleName)
+			log.Logger.Infof("Find the ocm Role %s ~", ocmRoleName)
 			return roleItme
 		}
 	}
@@ -537,10 +537,10 @@ func (url OCMRoleList) OCMRole(prefix string, ocmOrganizationExternalID string) 
 }
 
 // Get the ocm-role which is linked to org
-func (url OCMRoleList) FindLinkedOCMRole() (userRoles OCMRole) {
+func (url OCMRoleList) FindLinkedOCMRole() (ocmRoles OCMRole) {
 	for _, roleItme := range url.OCMRoleList {
 		if roleItme.Linded == "Yes" {
-			Logger.Infof("Find one linked ocm Role %s ~", roleItme.RoleName)
+			log.Logger.Infof("Find one linked ocm Role %s ~", roleItme.RoleName)
 			return roleItme
 		}
 	}
@@ -551,7 +551,7 @@ func (url OCMRoleList) FindLinkedOCMRole() (userRoles OCMRole) {
 func (url UserRoleList) FindLinkedUserRole() (userRoles UserRole) {
 	for _, roleItme := range url.UserRoleList {
 		if roleItme.Linded == "Yes" {
-			Logger.Infof("Find one linked user role %s ~", roleItme.RoleName)
+			log.Logger.Infof("Find one linked user role %s ~", roleItme.RoleName)
 			return roleItme
 		}
 	}
@@ -612,7 +612,7 @@ func (ors *ocmResourceService) GetOIDCIdFromList(providerURL string) (string, er
 			return item.ID, nil
 		}
 	}
-	Logger.Warnf("No oidc with the url %s is found.", providerURL)
+	log.Logger.Warnf("No oidc with the url %s is found.", providerURL)
 	return "", nil
 }
 func (ors *ocmResourceService) GetOIDCConfigFromList(oidcConfigID string) (OIDCConfig, error) {
@@ -751,7 +751,7 @@ func (dnsDomainlist DNSDomainList) GetDNSDomain(id string) (dnsDomain DNSDomain)
 }
 
 func (ors *ocmResourceService) CleanResources(clusterID string) (errors []error) {
-	Logger.Debugf("Nothing releated to cluster was done there")
+	log.Logger.Debugf("Nothing releated to cluster was done there")
 	return
 }
 
