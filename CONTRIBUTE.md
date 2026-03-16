@@ -42,6 +42,7 @@ make basic-checks                 # format + format-check + build + lint + chang
 
 `basic-checks` forces fresh test execution (no Go test cache) for test steps.
 Coverage in these check flows evaluates changed Go files only and requires a minimum of 80% of executable changed lines.
+Changed-files coverage uses `github.com/vearutop/gocovdiff@v1.4.2` via `go run`; if it is not already in your Go module cache, Go fetches it automatically.
 
 Use these stage-specific commands when you want to run what each hook runs:
 ```shell

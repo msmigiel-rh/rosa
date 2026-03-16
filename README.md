@@ -25,6 +25,7 @@ Formatting commands:
 - `make fmt` formats all Go files in `cmd/`, `pkg/`, and `tests/` and fails if rewrites were needed so you can review/stage changes
 - `make fmt-staged` formats only staged Go files and fails if it had to rewrite files so you can review/stage changes
 - `make fmt-check` validates formatting without changing files
+- changed-files coverage checks use `github.com/vearutop/gocovdiff@v1.4.2` via `go run` and fetch it automatically when missing
 
 See `CONTRIBUTE.md` for the full contribution workflow and commit requirements.
 
