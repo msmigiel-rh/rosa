@@ -39,7 +39,8 @@ type ResourcesHandler interface {
 	GetVPC() *vpc_client.VPC
 	GetAWSClient(useSharedVPCIfAvailable bool) (*aws_client.AWSClient, error)
 
-	PrepareVersion(versionRequirement string, channelGroup string, hcp bool) (*rosacli.OpenShiftVersionTableOutput, error)
+	PrepareVersion(versionRequirement string, channelGroup string,
+		hcp bool, env string) (*rosacli.OpenShiftVersionTableOutput, error)
 	PreparePrefix(profilePrefix string, nameLength int) string
 	PrepareVPC(vpcName string, cidrValue string, useExisting bool, withSharedAccount bool) (*vpc_client.VPC, error)
 	PrepareSubnets(zones []string, multiZone bool) (map[string][]string, error)
@@ -89,6 +90,9 @@ type ResourcesHandler interface {
 	DeleteOperatorRoles() error
 	DeleteOIDCConfig() error
 	DeleteAccountRoles() error
+	GetCurrentEnv() (string, error)
+	CheckAvailableUpgrade(versionRequirement string, hcp bool) (bool, bool, error)
+	GetCurrentChannel(version string) (string, error)
 }
 
 type resourcesHandler struct {

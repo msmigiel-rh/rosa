@@ -140,3 +140,32 @@ func ParseVersion(version string) (major, minor, optional int, err error) {
 	optional, err = strconv.Atoi(matches[3])
 	return
 }
+
+// Extract the major, minor parts from the channel string <channel>-Major.Minor,
+func ParseChannel(channelStr string) (channel string, major, minor int, err error) {
+	parts := strings.Split(channelStr, "-")
+	if len(parts) < 2 {
+		err = fmt.Errorf("invalid channel format: %s, expected format: <channel>-<major>.<minor>", channelStr)
+		return
+	}
+	channel = parts[0]
+	versionStr := parts[len(parts)-1]
+	versionParts := strings.Split(versionStr, ".")
+	if len(versionParts) < 2 {
+		err = fmt.Errorf("invalid version format in channel: %s, expected format: <major>.<minor>", channelStr)
+		return
+	}
+
+	major, err = strconv.Atoi(versionParts[0])
+	if err != nil {
+		err = fmt.Errorf("failed to parse major version from channel %s: %v", channelStr, err)
+		return
+	}
+
+	minor, err = strconv.Atoi(versionParts[1])
+	if err != nil {
+		err = fmt.Errorf("failed to parse minor version from channel %s: %v", channelStr, err)
+		return
+	}
+	return
+}
