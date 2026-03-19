@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/rosa/tests/utils/config"
 	"github.com/openshift/rosa/tests/utils/constants"
 	"github.com/openshift/rosa/tests/utils/log"
-	. "github.com/openshift/rosa/tests/utils/log"
 )
 
 type ClusterService interface {
@@ -25,7 +24,7 @@ type ClusterService interface {
 	ReflectClusterDescription(result bytes.Buffer) (*ClusterDescription, error)
 	DescribeClusterAndReflect(clusterID string) (*ClusterDescription, error)
 	List() (bytes.Buffer, error)
-	Create(clusterName string, flags ...string) (bytes.Buffer, error, string)
+	Create(clusterName string, flags ...string) (bytes.Buffer, string, error)
 	DeleteCluster(clusterID string, flags ...string) (bytes.Buffer, error)
 	CreateDryRun(clusterName string, flags ...string) (bytes.Buffer, error)
 	EditCluster(clusterID string, flags ...string) (bytes.Buffer, error)
@@ -81,6 +80,7 @@ type ClusterDescription struct {
 	ExternalID            string                   `yaml:"External ID,omitempty"`
 	OpenshiftVersion      string                   `yaml:"OpenShift Version,omitempty"`
 	ChannelGroup          string                   `yaml:"Channel Group,omitempty"`
+	Channel               string                   `yaml:"Channel,omitempty"`
 	DNS                   string                   `yaml:"DNS,omitempty"`
 	AdditionalPrincipals  string                   `yaml:"Additional Principals,omitempty"`
 	AWSAccount            string                   `yaml:"AWS Account,omitempty"`
@@ -235,13 +235,13 @@ func (c *clusterService) CreateDryRun(clusterName string, flags ...string) (byte
 	return createDryRun.Run()
 }
 
-func (c *clusterService) Create(clusterName string, flags ...string) (bytes.Buffer, error, string) {
+func (c *clusterService) Create(clusterName string, flags ...string) (bytes.Buffer, string, error) {
 	combflags := append([]string{"-c", clusterName}, flags...)
 	createCommand := c.client.Runner.
 		Cmd("create", "cluster").
 		CmdFlags(combflags...)
 	output, err := createCommand.Run()
-	return output, err, createCommand.CMDString()
+	return output, createCommand.CMDString(), err
 }
 
 func (c *clusterService) DeleteCluster(clusterID string, flags ...string) (bytes.Buffer, error) {
@@ -274,7 +274,7 @@ func (c *clusterService) UnInstallLog(clusterID string, flags ...string) (bytes.
 }
 
 func (c *clusterService) CleanResources(clusterID string) (errors []error) {
-	Logger.Debugf("Nothing releated to cluster was done there")
+	log.Logger.Debugf("Nothing releated to cluster was done there")
 	return
 }
 
@@ -358,7 +358,7 @@ func (c *clusterService) GetJSONClusterDescription(clusterID string) (*jsonData,
 	c.client.Runner.JsonFormat()
 	output, err := c.DescribeCluster(clusterID)
 	if err != nil {
-		Logger.Errorf("it met error when describeCluster in IsUsingReusableOIDCConfig is %v", err)
+		log.Logger.Errorf("it met error when describeCluster in IsUsingReusableOIDCConfig is %v", err)
 		return nil, err
 	}
 	c.client.Runner.UnsetFormat()

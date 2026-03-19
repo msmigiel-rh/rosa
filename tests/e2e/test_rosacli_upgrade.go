@@ -221,6 +221,29 @@ var _ = Describe("Cluster Upgrade testing",
 				}
 
 			}
+			By("Check and change channel before upgrade")
+			clusterService := rosaClient.Cluster
+			output, err = clusterService.DescribeCluster(clusterID)
+			Expect(err).To(BeNil())
+			CD, err := clusterService.ReflectClusterDescription(output)
+			Expect(err).To(BeNil())
+			currentChannel := CD.Channel
+			if currentChannel != "" {
+				// Before channel feature enabled on Prod, channel field is empty on prod env
+				channelName, _, minorC, _ := helper.ParseChannel(currentChannel)
+				majorV, minorV, _, _ := helper.ParseVersion(clusterVersion)
+
+				if minorC <= minorV {
+					By("Change channel")
+					updatingChannel := fmt.Sprintf("%s-%d.%d", channelName, majorV, minorV+1)
+					output, err := clusterService.EditCluster(clusterID,
+						"--channel", updatingChannel,
+						"-y",
+					)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(output.String()).Should(ContainSubstring("Updated cluster"))
+				}
+			}
 
 			By("Find updating version")
 			versionService := rosaClient.Version
@@ -423,11 +446,34 @@ var _ = Describe("Cluster Upgrade testing",
 				Expect(err).To(BeNil())
 				resourcesHandler := clusterHandler.GetResourcesHandler()
 
-				By("Upgrade wide AMI roles in auto mode")
+				By("Check and change channel before upgrade")
 				jsonData, err := clusterService.GetJSONClusterDescription(clusterID)
 				Expect(err).To(BeNil())
 				clusterVersion := jsonData.DigString("version", "raw_id")
+				clusterService := rosaClient.Cluster
+				output, err := clusterService.DescribeCluster(clusterID)
+				Expect(err).To(BeNil())
+				CD, err := clusterService.ReflectClusterDescription(output)
+				Expect(err).To(BeNil())
+				currentChannel := CD.Channel
+				if currentChannel != "" {
+					// Before channel feature enabled on Prod, channel field is empty on prod env
+					channelName, _, minorC, _ := helper.ParseChannel(currentChannel)
+					majorV, minorV, _, _ := helper.ParseVersion(clusterVersion)
 
+					if minorC <= minorV {
+						By("Change channel")
+						updatingChannel := fmt.Sprintf("%s-%d.%d", channelName, majorV, minorV+1)
+						output, err := clusterService.EditCluster(clusterID,
+							"--channel", updatingChannel,
+							"-y",
+						)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(output.String()).Should(ContainSubstring("Updated cluster"))
+					}
+				}
+
+				By("Upgrade wide AMI roles in auto mode")
 				clusterVersionList, err := versionService.ListAndReflectVersions(profile.ChannelGroup, false)
 				Expect(err).To(BeNil())
 
@@ -535,11 +581,34 @@ var _ = Describe("Cluster Upgrade testing",
 				Expect(err).To(BeNil())
 				resourcesHandler := clusterHandler.GetResourcesHandler()
 
-				By("Upgrade wide AMI roles in manual mode")
+				By("Check and change channel before upgrade")
 				jsonData, err := clusterService.GetJSONClusterDescription(clusterID)
 				Expect(err).To(BeNil())
 				clusterVersion := jsonData.DigString("version", "raw_id")
+				clusterService := rosaClient.Cluster
+				output, err := clusterService.DescribeCluster(clusterID)
+				Expect(err).To(BeNil())
+				CD, err := clusterService.ReflectClusterDescription(output)
+				Expect(err).To(BeNil())
+				currentChannel := CD.Channel
+				if currentChannel != "" {
+					// Before channel feature enabled on Prod, channel field is empty on prod env
+					channelName, _, minorC, _ := helper.ParseChannel(currentChannel)
+					majorV, minorV, _, _ := helper.ParseVersion(clusterVersion)
 
+					if minorC <= minorV {
+						By("Change channel")
+						updatingChannel := fmt.Sprintf("%s-%d.%d", channelName, majorV, minorV+1)
+						output, err := clusterService.EditCluster(clusterID,
+							"--channel", updatingChannel,
+							"-y",
+						)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(output.String()).Should(ContainSubstring("Updated cluster"))
+					}
+				}
+
+				By("Upgrade wide AMI roles in manual mode")
 				clusterVersionList, err := versionService.ListAndReflectVersions(profile.ChannelGroup, false)
 				Expect(err).To(BeNil())
 				if profile.ClusterConfig.HCP {
@@ -722,6 +791,31 @@ var _ = Describe("Describe/List rosa upgrade",
 				}
 
 				if clusterConfig.Version.VersionRequirement == constants.YStreamPreviousVersion {
+					By("Check and change channel before upgrade")
+					clusterService := rosaClient.Cluster
+					output, err = clusterService.DescribeCluster(clusterID)
+					Expect(err).To(BeNil())
+					CD, err := clusterService.ReflectClusterDescription(output)
+					Expect(err).To(BeNil())
+					currentChannel := CD.Channel
+					clusterVersion := clusterConfig.Version.RawID
+					if currentChannel != "" {
+						// Before channel feature enabled on Prod, channel field is empty on prod env
+						channelName, _, minorC, _ := helper.ParseChannel(currentChannel)
+						majorV, minorV, _, _ := helper.ParseVersion(clusterVersion)
+
+						if minorC <= minorV {
+							By("Change channel")
+							updatingChannel := fmt.Sprintf("%s-%d.%d", channelName, majorV, minorV+1)
+							output, err := clusterService.EditCluster(clusterID,
+								"--channel", updatingChannel,
+								"-y",
+							)
+							Expect(err).ToNot(HaveOccurred())
+							Expect(output.String()).Should(ContainSubstring("Updated cluster"))
+						}
+					}
+
 					By("Upgrade cluster and check list/describe upgrade")
 					scheduledDate := time.Now().Format("2006-01-02")
 					scheduledTime := time.Now().Add(20 * time.Minute).UTC().Format("15:04")

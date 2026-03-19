@@ -35,3 +35,14 @@ const (
 	OCMRolePreifx  = "rosacli-ocm-role"
 	UserRolePreifx = "rosacli-user-role"
 )
+
+const (
+	StageEnvName    = "stage"
+	ProductionName  = "production"
+	IntegrationName = "integration"
+)
+
+// User role and OCM role Env Infix
+const (
+	StageEnvInfix = "stage"
+)

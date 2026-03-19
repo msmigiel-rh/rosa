@@ -220,9 +220,13 @@ func (ch *clusterHandler) GenerateClusterCreateFlags() ([]string, error) {
 	flags := []string{"-y"}
 	ch.clusterConfig.Name = clusterName
 
+	env, err := resourcesHandler.GetCurrentEnv()
+	if err != nil {
+		return flags, err
+	}
 	if ch.profile.Version != "" {
 		// Force set the hcp parameter to false since hcp cannot filter the upgrade versions
-		version, err := resourcesHandler.PrepareVersion(ch.profile.Version, ch.profile.ChannelGroup, false)
+		version, err := resourcesHandler.PrepareVersion(ch.profile.Version, ch.profile.ChannelGroup, false, env)
 
 		if err != nil {
 			return flags, err
@@ -246,6 +250,20 @@ func (ch *clusterHandler) GenerateClusterCreateFlags() ([]string, error) {
 			ch.clusterConfig.Version = &ClusterConfigure.Version{}
 		}
 		ch.clusterConfig.Version.ChannelGroup = ch.profile.ChannelGroup
+	} else {
+		// if profile is not with channel group setting, use channel based on the cluster version
+		// before channel is enabled on production env, skip to set the flag
+		if env != constants.ProductionName {
+			channel, err := resourcesHandler.GetCurrentChannel(ch.clusterConfig.Version.RawID)
+			if err != nil {
+				return flags, err
+			}
+			if channel != "" {
+				flags = append(flags, "--channel", channel)
+			}
+		} else {
+			log.Logger.Info("production env, skipping channel flag")
+		}
 	}
 	if ch.profile.Region != "" {
 		flags = append(flags, "--region", ch.profile.Region)
@@ -1072,7 +1090,7 @@ func (ch *clusterHandler) createClusterByProfileWithoutWaiting() error {
 		return err
 	}
 	log.Logger.Infof("User data and flags preparation finished")
-	_, err, createCMD := clusterService.Create(ch.profile.ClusterConfig.Name, flags...)
+	_, createCMD, err := clusterService.Create(ch.profile.ClusterConfig.Name, flags...)
 	if err != nil {
 		return err
 	}

@@ -327,7 +327,7 @@ var _ = Describe("HCP cluster testing",
 			labels.High, labels.Runtime.Day2, labels.FedRAMP,
 			func() {
 				By("Check the help message of 'rosa create cluster -h'")
-				output, err, _ := clusterService.Create("", "-h")
+				output, _, err := clusterService.Create("", "-h")
 				Expect(err).To(BeNil())
 				Expect(output.String()).To(ContainSubstring("--kms-key-arn"))
 				Expect(output.String()).To(ContainSubstring("--etcd-encryption"))
@@ -370,7 +370,7 @@ var _ = Describe("HCP cluster testing",
 			func() {
 				By("Check the help message of 'rosa create cluster -h'")
 				//It is hiddened now
-				helpOutput, err, _ := clusterService.Create("", "-h")
+				helpOutput, _, err := clusterService.Create("", "-h")
 				Expect(err).To(BeNil())
 				Expect(helpOutput.String()).To(ContainSubstring("--no-cni"))
 
@@ -397,7 +397,7 @@ var _ = Describe("HCP cluster testing",
 			labels.High, labels.Runtime.Day2, labels.FedRAMP,
 			func() {
 				By("Check the help message of 'rosa create cluster -h'")
-				helpOutput, err, _ := clusterService.Create("", "-h")
+				helpOutput, _, err := clusterService.Create("", "-h")
 				Expect(err).To(BeNil())
 				Expect(helpOutput.String()).To(ContainSubstring("--external-auth-providers-enabled"))
 
@@ -562,7 +562,7 @@ var _ = Describe("HCP cluster testing",
 			labels.High, labels.Runtime.Day1Post, labels.FedRAMP,
 			func() {
 				By("Check the help message of 'rosa create cluster -h'")
-				helpOutput, err, _ := clusterService.Create("", "-h")
+				helpOutput, _, err := clusterService.Create("", "-h")
 				Expect(err).To(BeNil())
 				Expect(helpOutput.String()).To(ContainSubstring("--registry-config-allowed-registries"))
 				Expect(helpOutput.String()).To(ContainSubstring("--registry-config-insecure-registries"))

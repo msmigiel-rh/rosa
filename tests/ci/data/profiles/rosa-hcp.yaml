@@ -1,7 +1,6 @@
 profiles:
 - as: rosa-hcp-advanced
   version: latest
-  channel_group: stable
   region: "us-west-2"
   cluster:
     multi_az: true
@@ -40,7 +39,6 @@ profiles:
     permission_boundary: ""
 - as: rosa-hcp-pl
   version: latest
-  channel_group: stable
   region: "us-west-2"
   cluster:
     multi_az: true
@@ -68,7 +66,6 @@ profiles:
     permission_boundary: "arn:aws:iam::aws:policy/AdministratorAccess"
 - as: rosa-hcp-upgrade-z-stream
   version: "z-1"
-  channel_group: stable
   region: "us-west-2"
   cluster:
     multi_az: true
@@ -102,7 +99,6 @@ profiles:
     permission_boundary: ""
 - as: rosa-hcp-upgrade-y-stream
   version: "y-1"
-  channel_group: stable
   region: "us-west-2"
   cluster:
     multi_az: true
@@ -242,7 +238,6 @@ profiles:
     permission_boundary: ""
 - as: rosa-hcp-basic
   version: latest
-  channel_group: stable
   region: "us-west-2"
   cluster:
     multi_az: true

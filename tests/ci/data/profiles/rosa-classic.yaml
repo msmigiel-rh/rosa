@@ -1,7 +1,6 @@
 profiles:
 - as: rosa-advanced
   version: latest
-  channel_group: "candidate"
   region: "us-west-2"
   cluster:
     multi_az: true
@@ -41,7 +40,6 @@ profiles:
     tuning-config-mp: false
 - as: rosa-private-link
   version: latest
-  channel_group: "candidate"
   region: "us-east-2"
   cluster:
     multi_az: true
@@ -203,7 +201,6 @@ profiles:
     permission_boundary: ""  
 - as: rosa-upgrade-y-stream
   version: "y-1"
-  channel_group: stable
   region: "us-east-1"
   cluster:
     multi_az: false

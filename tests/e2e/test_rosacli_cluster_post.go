@@ -440,7 +440,7 @@ var _ = Describe("Healthy check",
 			It("with subnets will work - [id:37176]", labels.Runtime.Day1Post, labels.Critical, labels.FedRAMP,
 				func() {
 					By("Check the creation command help")
-					output, err, _ := clusterService.Create("cluster-37176", "-h")
+					output, _, err := clusterService.Create("cluster-37176", "-h")
 					Expect(err).ToNot(HaveOccurred())
 					flag := "--subnet-ids strings"
 					description := "The Subnet IDs to use when installing the cluster." +
@@ -496,7 +496,7 @@ var _ = Describe("Healthy check",
 			It("with proxy set will work - [id:45502]", labels.Runtime.Day1Post, labels.Critical, labels.FedRAMP,
 				func() {
 					By("Check the help message of proxy")
-					output, err, _ := clusterService.Create("cl-45502", "-h")
+					output, _, err := clusterService.Create("cl-45502", "-h")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(output.String()).Should(
 						MatchRegexp(`-{2}http-proxy string[\s\t]+A proxy URL to use for creating HTTP connections`))

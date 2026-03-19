@@ -33,7 +33,7 @@ import (
 
 func (rh *resourcesHandler) PrepareVersion(versionRequirement string,
 	channelGroup string,
-	hcp bool,
+	hcp bool, env string,
 ) (*rosacli.OpenShiftVersionTableOutput, error) {
 	log.Logger.Infof("Got version requirement %s going to prepare accordingly", versionRequirement)
 	log.Logger.Infof("Channel group = %s", channelGroup)
@@ -66,18 +66,144 @@ func (rh *resourcesHandler) PrepareVersion(versionRequirement string,
 		log.Logger.Infof("Going to prepare version for %s stream %v versions lower", stream, versionStep)
 		switch stream {
 		case "y":
-			var version *rosacli.OpenShiftVersionTableOutput
-			version, err = versionList.FindYStreamUpgradableVersion(latestVersion.Version)
-			return version, err
+			if env == constants.ProductionName {
+				var version *rosacli.OpenShiftVersionTableOutput
+				version, err = versionList.FindYStreamUpgradableVersion(latestVersion.Version)
+				return version, err
+			} else {
+				sortedVersions, err := versionList.Sort(true)
+				if err != nil {
+					return nil, err
+				}
+				for _, v := range sortedVersions.OpenShiftVersions {
+					yStream, _, err := rh.CheckAvailableUpgrade(v.Version, hcp)
+					if err != nil {
+						return nil, err
+					}
+					if yStream {
+						return v, nil
+					}
+				}
+			}
+
 		case "z":
-			var version *rosacli.OpenShiftVersionTableOutput
-			version, err := versionList.FindZStreamUpgradableVersion(latestVersion.Version, versionStep)
-			return version, err
+			if env == constants.ProductionName {
+				var version *rosacli.OpenShiftVersionTableOutput
+				version, err := versionList.FindZStreamUpgradableVersion(latestVersion.Version, versionStep)
+				return version, err
+			} else {
+				sortedVersions, err := versionList.Sort(true)
+				if err != nil {
+					return nil, err
+				}
+				for _, v := range sortedVersions.OpenShiftVersions {
+					_, zStream, err := rh.CheckAvailableUpgrade(v.Version, hcp)
+					if err != nil {
+						return nil, err
+					}
+					if zStream {
+						return v, nil
+					}
+				}
+			}
 		default:
 			return nil, fmt.Errorf("not supported stream configuration %s", stream)
 		}
 	}
 	return nil, fmt.Errorf("not supported version requirement: %s", versionRequirement)
+}
+
+func (rh *resourcesHandler) CheckAvailableUpgrade(versionRequirement string,
+	hcp bool) (bool, bool, error) {
+	log.Logger.Infof("Checkingt %s upgrade availability", versionRequirement)
+	r := rosa.NewRuntime().WithOCM()
+	defer r.Cleanup()
+
+	availableUpgrades, err := r.OCMClient.GetAvailableUpgrades(fmt.Sprintf("%s%s", ocm.VersionPrefix, versionRequirement))
+	if err != nil {
+		return false, false, err
+	}
+	findYUpgrade := false
+	findZUpgrade := false
+	major, minor, _, err := helper.ParseVersion(versionRequirement)
+	if err != nil {
+		return false, false, err
+	}
+	for _, v := range availableUpgrades {
+		if findZUpgrade && findYUpgrade {
+			break
+		}
+		if strings.HasPrefix(v, fmt.Sprintf("%d.%d", major, minor+1)) {
+			log.Logger.Infof("Y upgrading version is found.")
+			findYUpgrade = true
+		}
+		if strings.HasPrefix(v, fmt.Sprintf("%d.%d", major, minor)) {
+			log.Logger.Infof("Z upgrading version is found.")
+			findZUpgrade = true
+		}
+	}
+	return findYUpgrade, findZUpgrade, nil
+}
+
+// GetUpgradeChannel return the channel based on current version
+func (rh *resourcesHandler) GetCurrentChannel(version string) (string, error) {
+	// Initialize OCM client
+	r := rosa.NewRuntime().WithOCM()
+	defer r.Cleanup()
+
+	// Parse version to get major.minor (e.g., "4.20" from "4.20.15")
+	parts := strings.Split(version, ".")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid version format: %s", version)
+	}
+
+	majorMinor := strings.Join(parts[:2], ".")
+
+	// Create version ID for OCM API call
+	versionID := fmt.Sprintf("%s%s", ocm.VersionPrefix, version)
+	log.Logger.Infof("Getting available channels for version %s", versionID)
+
+	// Get available channels
+	availableChannels, err := r.OCMClient.GetAvailableChannels(versionID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get available channels for version %s: %v", versionID, err)
+	}
+
+	if len(availableChannels) == 0 {
+		return "", fmt.Errorf("no available channels found for version %s", version)
+	}
+
+	log.Logger.Infof("Available channels for version %s: %v", version, availableChannels)
+
+	// Find channels matching current major.minor version
+	// Prefer stable- prefix over others (e.g., "stable-4.20" over "eus-4.20")
+	var stableChannel string
+	var otherChannel string
+
+	for _, channel := range availableChannels {
+		// Check if channel matches current version (e.g., ends with "4.20")
+		if strings.HasSuffix(channel, majorMinor) {
+			if strings.HasPrefix(channel, "stable-") {
+				stableChannel = channel
+				log.Logger.Infof("Found stable channel for version %s: %s", version, channel)
+			} else if otherChannel == "" {
+				otherChannel = channel
+				log.Logger.Infof("Found channel for version %s: %s", version, channel)
+			}
+		}
+	}
+
+	// Return stable channel if available, otherwise return other channel
+	if stableChannel != "" {
+		return stableChannel, nil
+	}
+
+	if otherChannel != "" {
+		return otherChannel, nil
+	}
+
+	return "", fmt.Errorf("no channel found for version %s (%s) in available channels: %v",
+		version, majorMinor, availableChannels)
 }
 
 // PrepareNames will generate the name for cluster creation
@@ -386,8 +512,8 @@ func (rh *resourcesHandler) PrepareOCMRole(
 	whoamiData := ocmResourceService.ReflectAccountsInfo(whoamiOutput)
 	ocmOrganizationExternalID := whoamiData.OCMOrganizationExternalID
 
-	if strings.Contains(whoamiData.OCMApi, "stage") {
-		roleNameEnvInfix = "stage"
+	if strings.Contains(whoamiData.OCMApi, constants.StageEnvName) {
+		roleNameEnvInfix = constants.StageEnvInfix
 	} else if strings.Contains(whoamiData.OCMApi, "integration") {
 		roleNameEnvInfix = "int"
 	} else {
@@ -484,8 +610,8 @@ func (rh *resourcesHandler) PrepareUserRole(
 	rh.rosaClient.Runner.UnsetFormat()
 	whoamiData := ocmResourceService.ReflectAccountsInfo(whoamiOutput)
 
-	if strings.Contains(whoamiData.OCMApi, "stage") {
-		roleNameEnvInfix = "stage"
+	if strings.Contains(whoamiData.OCMApi, constants.StageEnvName) {
+		roleNameEnvInfix = constants.StageEnvInfix
 	} else if strings.Contains(whoamiData.OCMApi, "integration") {
 		roleNameEnvInfix = "int"
 	} else {
@@ -1263,4 +1389,23 @@ func (rh *resourcesHandler) PrepareLogForwardRole(oidcProviderURL string, rolePr
 		log.Logger.Errorf("Error happened when record resource share: %s", err.Error())
 	}
 	return roleArn, nil
+}
+
+func (rh *resourcesHandler) GetCurrentEnv() (string, error) {
+	ocmResourceService := rh.rosaClient.OCMResource
+	rh.rosaClient.Runner.JsonFormat()
+	whoamiOutput, err := ocmResourceService.Whoami()
+	if err != nil {
+		return "", fmt.Errorf("error happens when get account information, %s", err.Error())
+	}
+	rh.rosaClient.Runner.UnsetFormat()
+	whoamiData := ocmResourceService.ReflectAccountsInfo(whoamiOutput)
+
+	if strings.Contains(whoamiData.OCMApi, "stage") {
+		return "stage", nil
+	} else if strings.Contains(whoamiData.OCMApi, "integration") {
+		return "integration", nil
+	} else {
+		return "production", nil
+	}
 }

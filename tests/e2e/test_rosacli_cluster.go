@@ -1859,7 +1859,7 @@ var _ = Describe("Create cluster with invalid options will",
 				By("Create cluster with non-existed subnets on AWS")
 				clusterName := "cluster-37177"
 
-				output, err, _ := clusterService.Create(clusterName,
+				output, _, err := clusterService.Create(clusterName,
 					"--subnet-ids", "subnet-nonexisting",
 				)
 				Expect(err).To(HaveOccurred())
@@ -1867,7 +1867,7 @@ var _ = Describe("Create cluster with invalid options will",
 					ContainSubstring("he subnet ID 'subnet-nonexisting' does not exist"))
 
 				By("Create multi_az cluster with subnet which only support 1 zone")
-				output, err, _ = clusterService.Create(clusterName,
+				output, _, err = clusterService.Create(clusterName,
 					"--subnet-ids", subnetMap["private"].ID,
 					"--multi-az",
 					"--region", testingTegion,
@@ -1882,7 +1882,7 @@ var _ = Describe("Create cluster with invalid options will",
 					By("Create single_az cluster with multiple zones set")
 					subnetMap2, err := vpc.PreparePairSubnetByZone(azs[1])
 					Expect(err).ToNot(HaveOccurred())
-					output, err, _ = clusterService.Create(clusterName,
+					output, _, err = clusterService.Create(clusterName,
 						"--subnet-ids", strings.Join(
 							[]string{
 								subnetMap["private"].ID,
@@ -1908,7 +1908,7 @@ var _ = Describe("Create cluster with invalid options will",
 							subnetMap["public"].ID)
 					}
 					fiveSubnetsList := fitZoneSubnets[0:5]
-					output, err, _ = clusterService.Create(clusterName,
+					output, _, err = clusterService.Create(clusterName,
 						"--subnet-ids", strings.Join(
 							fiveSubnetsList,
 							","),
@@ -1936,7 +1936,7 @@ var _ = Describe("Create cluster with invalid options will",
 					additionalSubnetsNumber--
 				}
 
-				output, err, _ = clusterService.Create(clusterName,
+				output, _, err = clusterService.Create(clusterName,
 					"--subnet-ids", strings.Join(
 						sameZoneSubnets, ","),
 					"--region", testingTegion,
@@ -2268,7 +2268,7 @@ var _ = Describe("Classic cluster creation negative testing",
 				By("Create cluster with latest version and use the low version account-roles")
 				clusterName := "cluster45176"
 				operatorRolePrefix := "cluster45176-xvfa"
-				out, err, _ := clusterService.Create(
+				out, _, err := clusterService.Create(
 					clusterName, "--sts",
 					"--mode", "auto",
 					"--role-arn", ar.InstallerRole,
@@ -2302,7 +2302,7 @@ var _ = Describe("Classic cluster creation negative testing",
 				By("Create cluster with operator roles prefix longer than 32 characters")
 				clusterName := "test41824"
 				oprPrefixExceed32Chars := "opPrefix45742opPrefix45742opPrefix45742"
-				output, err, _ = clusterService.Create(
+				output, _, err = clusterService.Create(
 					clusterName, "--sts",
 					"--mode", "auto",
 					"--role-arn", ar.InstallerRole,
@@ -2317,7 +2317,7 @@ var _ = Describe("Classic cluster creation negative testing",
 
 				By("Create cluster with operator roles prefix with invalid format")
 				oprPrefixInvaliad := "%%%###@@@"
-				output, err, _ = clusterService.Create(
+				output, _, err = clusterService.Create(
 					clusterName, "--sts",
 					"--mode", "auto",
 					"--role-arn", ar.InstallerRole,
@@ -2332,7 +2332,7 @@ var _ = Describe("Classic cluster creation negative testing",
 
 				By("Create cluster with account roles with invalid format")
 				invalidArn := "invalidaArnFormat"
-				output, err, _ = clusterService.Create(
+				output, _, err = clusterService.Create(
 					clusterName, "--sts",
 					"--mode", "auto",
 					"--role-arn", invalidArn,
@@ -2379,7 +2379,7 @@ var _ = Describe("Classic cluster creation negative testing",
 
 				By("Create cluster with operator roles prefix longer than 32 characters")
 				clusterName := "test41824"
-				output, err, _ = clusterService.Create(
+				output, _, err = clusterService.Create(
 					clusterName, "--sts",
 					"--mode", "auto",
 					"--role-arn", ar.InstallerRole,
@@ -3436,7 +3436,7 @@ var _ = Describe("Create cluster with existing operator-roles prefix which roles
 				By("Create one sts cluster")
 				clusterNameToClean = "test-45742"
 				operatorRolePreifx := "opPrefix45742"
-				_, err, _ = clusterService.Create(
+				_, _, err = clusterService.Create(
 					clusterNameToClean, "--sts",
 					"--mode", "auto",
 					"--role-arn", ar.InstallerRole,
@@ -3450,7 +3450,7 @@ var _ = Describe("Create cluster with existing operator-roles prefix which roles
 
 				By("Create another cluster with the same operator-roles-prefix")
 				clusterName := "test-45742b"
-				out, err, _ := clusterService.Create(
+				out, _, err := clusterService.Create(
 					clusterName, "--sts",
 					"--mode", "auto",
 					"--role-arn", ar.InstallerRole,
@@ -3556,7 +3556,7 @@ var _ = Describe("create/delete operator-roles and oidc-provider to cluster",
 				clusterNameToClean = helper.GenerateRandomName("c43053", 2)
 				// Configure with a random str, which can solve the rerun failure
 				operatorRolePreifx := helper.GenerateRandomName("opPrefix43053", 2)
-				_, err, _ = clusterService.Create(
+				_, _, err = clusterService.Create(
 					clusterNameToClean, "--sts",
 					"--mode", "manual",
 					"--role-arn", ar.InstallerRole,
@@ -4344,7 +4344,7 @@ var _ = Describe("Sts cluster creation supplemental testing",
 
 				flags = append(flags, "-m")
 				flags = append(flags, "auto")
-				_, err, _ = clusterService.Create(testingClusterName, flags[:]...)
+				_, _, err = clusterService.Create(testingClusterName, flags[:]...)
 				Expect(err).To(BeNil())
 				defer func() {
 					By("Delete cluster")
@@ -4375,7 +4375,7 @@ var _ = Describe("Sts cluster creation supplemental testing",
 			labels.Medium, labels.Runtime.Day1Supplemental,
 			func() {
 				By("Check the help message of 'rosa describe upgrade -h'")
-				output, err, _ := clusterService.Create("ocp55701", "--help")
+				output, _, err := clusterService.Create("ocp55701", "--help")
 				Expect(err).To(BeNil())
 				Expect(output.String()).To(ContainSubstring("rosa create cluster [flags]"))
 				Expect(output.String()).To(ContainSubstring("--sts"))
@@ -4384,14 +4384,14 @@ var _ = Describe("Sts cluster creation supplemental testing",
 
 				By("Create cluster with '--sts' flag")
 				testingClusterName = helper.GenerateRandomName("c55701", 2)
-				output, err, _ = clusterService.Create(testingClusterName, "--sts")
+				output, _, err = clusterService.Create(testingClusterName, "--sts")
 				Expect(err).NotTo(BeNil())
 				Expect(output.String()).To(ContainSubstring("More than one Installer role found"))
 				Expect(output.String()).To(ContainSubstring("Expected a valid role ARN"))
 
 				By("Create cluster with '--non-sts' flag")
 				testingClusterName = helper.GenerateRandomName("c55701", 2)
-				output, err, _ = clusterService.Create(testingClusterName, "--non-sts")
+				output, _, err = clusterService.Create(testingClusterName, "--non-sts")
 				Expect(err).To(BeNil())
 
 				rosaClient.Runner.UnsetArgs()
@@ -4415,7 +4415,7 @@ var _ = Describe("Sts cluster creation supplemental testing",
 
 				By("Create cluster with '--mint-mode' flag")
 				testingClusterName = helper.GenerateRandomName("c55701", 2)
-				output, err, _ = clusterService.Create(testingClusterName, "--mint-mode")
+				output, _, err = clusterService.Create(testingClusterName, "--mint-mode")
 				Expect(err).To(BeNil())
 
 				rosaClient.Runner.UnsetArgs()
