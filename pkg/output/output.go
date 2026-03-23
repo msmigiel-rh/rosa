@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 
 	"sigs.k8s.io/yaml"
@@ -41,6 +42,30 @@ import (
 // '[', '\n', ' ', ' ', '\n', ']'. This byte-array allows us to compare that so
 // that the output can be shown correctly.
 var emptyBuffer = []byte{91, 10, 32, 32, 10, 93}
+
+// PrintWarn outputs a warning as JSON to stderr when a structured output format is requested.
+// Returns true if the warning was printed in structured format, false otherwise.
+func PrintWarn(err error) bool {
+	if !IsStructuredOutput() {
+		return false
+	}
+	warnObj := map[string]string{"warning": err.Error()}
+	b, _ := json.Marshal(warnObj)
+	fmt.Fprintln(os.Stderr, string(b))
+	return true
+}
+
+// PrintError outputs an error as JSON to stderr when a structured output format is requested.
+// Returns true if the error was printed in structured format, false otherwise.
+func PrintError(err error) bool {
+	if !IsStructuredOutput() {
+		return false
+	}
+	errObj := map[string]string{"error": err.Error()}
+	b, _ := json.Marshal(errObj)
+	fmt.Fprintln(os.Stderr, string(b))
+	return true
+}
 
 func Print(resource interface{}) error {
 	var b bytes.Buffer
