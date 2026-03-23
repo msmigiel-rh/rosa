@@ -115,7 +115,7 @@ func (rh *resourcesHandler) PrepareVersion(versionRequirement string,
 
 func (rh *resourcesHandler) CheckAvailableUpgrade(versionRequirement string,
 	hcp bool) (bool, bool, error) {
-	log.Logger.Infof("Checkingt %s upgrade availability", versionRequirement)
+	log.Logger.Infof("Checking %s upgrade availability", versionRequirement)
 	r := rosa.NewRuntime().WithOCM()
 	defer r.Cleanup()
 
