@@ -123,6 +123,7 @@ type ClusterDescription struct {
 	EnableEtcdEncryption     string                   `yaml:"Etcd Encryption,omitempty"`
 	EtcdKmsKeyARN            string                   `yaml:"Etcd KMS key ARN,omitempty"`
 	RegistryConfiguration    []map[string]interface{} `yaml:"Registry Configuration,omitempty"`
+	AutoNode                 string                   `yaml:"AutoNode,omitempty"`
 	ZeroEgress               string                   `yaml:"Zero Egress,omitempty"`
 	SharedVPCConfig          []map[string]string      `yaml:"Shared VPC Config,omitempty"`
 }

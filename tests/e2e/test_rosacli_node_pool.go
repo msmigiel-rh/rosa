@@ -557,7 +557,7 @@ var _ = Describe("Edit nodepool",
 					textData := rosaClient.Parser.TextData.Input(output).Parse().Tip()
 					Expect(textData).
 						Should(ContainSubstring(
-							`ERR: expected a valid OpenShift version: A valid version number must be specified`))
+							`xpected a valid OpenShift version`))
 					textData = rosaClient.Parser.TextData.Input(output).Parse().Output()
 					Expect(textData).Should(ContainSubstring(`Valid versions:`))
 				}

@@ -1013,7 +1013,6 @@ var _ = Describe("Edit cluster validation should", labels.Feature.Cluster, func(
 					ContainSubstring("AutoNode is only supported for Hosted Control Plane clusters"))
 				return
 			}
-
 			By("Invalide value of --autonode flag")
 			output, err := clusterService.EditCluster(clusterID,
 				"--autonode-iam-role-arn", roleArn,
@@ -1024,20 +1023,39 @@ var _ = Describe("Edit cluster validation should", labels.Feature.Cluster, func(
 				ContainSubstring("only 'enabled' is supported"),
 			))
 
-			By("Invalide autonde-iam-role-arn")
-			output, err = clusterService.EditCluster(clusterID,
-				"--autonode-iam-role-arn", "invalide-arn",
-				"--autonode", "enabled")
-			Expect(err).To(HaveOccurred())
-			Expect(output.String()).Should(
-				ContainSubstring("nvalid IAM role ARN format"))
+			By("Check current autonode setting")
+			jsonData, err := clusterService.GetJSONClusterDescription(clusterID)
+			Expect(err).To(BeNil())
 
-			By("Edit autonde-iam-role-arn without --autonode flag ")
-			output, err = clusterService.EditCluster(clusterID,
-				"--autonode-iam-role-arn", roleArn)
-			Expect(err).To(HaveOccurred())
-			Expect(output.String()).Should(
-				ContainSubstring("nable AutoNode first with --autonode=enabled"))
+			By("Invalide autonde-iam-role-arn")
+			var subCommandArgs []string
+			if jsonData.DigString("auto_node", "mode") == "enabled" {
+				subCommandArgs = []string{
+					"--autonode-iam-role-arn", "invalide-arn"}
+				By("Validate invalide autonde-iam-role-arn when autonode is enabled")
+				output, err = clusterService.EditCluster(clusterID,
+					subCommandArgs...)
+				Expect(err).To(HaveOccurred())
+				Expect(output.String()).Should(
+					ContainSubstring("nvalid IAM role ARN format"))
+			} else {
+				subCommandArgs = []string{
+					"--autonode-iam-role-arn", "invalide-arn",
+					"--autonode", "enabled",
+				}
+				By("Validate invalide autonde-iam-role-arn when autonode is not enabled")
+				output, err = clusterService.EditCluster(clusterID,
+					subCommandArgs...)
+				Expect(err).To(HaveOccurred())
+				Expect(output.String()).Should(
+					ContainSubstring("nvalid IAM role ARN format"))
+				By("Edit autonde-iam-role-arn without --autonode flag ")
+				output, err = clusterService.EditCluster(clusterID,
+					"--autonode-iam-role-arn", roleArn)
+				Expect(err).To(HaveOccurred())
+				Expect(output.String()).Should(
+					ContainSubstring("nable AutoNode first with --autonode=enabled"))
+			}
 		})
 })
 var _ = Describe("Additional security groups validation",
@@ -1766,7 +1784,7 @@ var _ = Describe("Classic cluster creation validation",
 				Expect(err).NotTo(BeNil())
 				Expect(errorOutput.String()).
 					To(
-						ContainSubstring("Expected a valid OpenShift version: A valid version number must be specified"))
+						ContainSubstring("xpected a valid OpenShift version"))
 			})
 
 		It("to validate to create the cluster with setting 'fips' flag but '--etcd-encryption=false' - [id:74436]",

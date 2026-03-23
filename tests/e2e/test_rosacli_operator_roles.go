@@ -1121,7 +1121,7 @@ var _ = Describe("Upgrade operator roles in auto mode",
 					PermissionBoundary: "",
 				},
 				Version:      "y-1",
-				ChannelGroup: "candidate",
+				ChannelGroup: "stable",
 				Region:       "us-west-2",
 			}
 			customProfile.NamePrefix = constants.DefaultNamePrefix
