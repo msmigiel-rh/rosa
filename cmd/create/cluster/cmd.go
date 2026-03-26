@@ -4141,6 +4141,9 @@ func buildCommand(spec ocm.Spec, operatorRolesPrefix string,
 		}
 		command += fmt.Sprintf(" --version %s", commandVersion)
 	}
+	if spec.Channel != "" {
+		command += fmt.Sprintf(" --channel %s", spec.Channel)
+	}
 
 	if spec.Ec2MetadataHttpTokens != "" {
 		command += fmt.Sprintf(" --ec2-metadata-http-tokens %s", spec.Ec2MetadataHttpTokens)
