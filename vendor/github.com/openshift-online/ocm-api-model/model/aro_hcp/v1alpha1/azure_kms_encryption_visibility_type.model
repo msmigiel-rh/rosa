@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Red Hat, Inc.
+Copyright (c) 2025 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// This file contains the version number of the client.
+// AzureKmsEncryptionVisibility defines the visibility of the Azure KMS key vault.
+enum AzureKmsEncryptionVisibility {
+	// The key vault is publicly accessible.
+	Public
 
-package sdk
-
-const Version = "0.1.499"
+	// The key vault is privately accessible.
+	Private
+}
