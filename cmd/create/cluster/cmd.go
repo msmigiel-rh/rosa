@@ -2745,6 +2745,7 @@ func run(cmd *cobra.Command, _ []string) {
 		PrivateSubnetsCount: privateSubnetsCount,
 		IsHostedCp:          isHostedCP,
 		MultiAz:             multiAZ,
+		Autoscaling:         autoscaling,
 	}
 	if !autoscaling {
 		clusterAutoscaler = nil

@@ -379,9 +379,14 @@ func (r *ReplicaSizeValidation) MinReplicaValidatorOnClusterCreate() interactive
 			return err
 		}
 
-		if r.IsHostedCp && minReplicas < 2 {
-			return fmt.Errorf("hosted Control Plane clusters require a minimum of 2 nodes, "+
-				"but %d was requested", minReplicas)
+		if r.IsHostedCp {
+			if !r.Autoscaling && minReplicas < 2 {
+				return fmt.Errorf("hosted Control Plane clusters require a minimum of 2 nodes, "+
+					"but %d was requested", minReplicas)
+			}
+			if r.Autoscaling && minReplicas < 0 {
+				return fmt.Errorf("min-replicas must be a non-negative number when autoscaling is enabled")
+			}
 		}
 
 		err = validateClusterVersionWithMaxNodesLimit(
@@ -404,6 +409,10 @@ func (r *ReplicaSizeValidation) MaxReplicaValidatorOnClusterCreate() interactive
 		maxReplicas, err := strconv.Atoi(fmt.Sprintf("%v", val))
 		if err != nil {
 			return err
+		}
+
+		if maxReplicas < 0 {
+			return fmt.Errorf("max-replicas must be a non-negative number when autoscaling is enabled")
 		}
 
 		err = validateClusterVersionWithMaxNodesLimit(

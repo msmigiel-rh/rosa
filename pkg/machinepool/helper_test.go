@@ -569,6 +569,244 @@ var _ = Describe("Machine pool min/max replicas validation", func() {
 			true,
 		),
 	)
+
+	DescribeTable("MinReplicaValidatorOnClusterCreate validation",
+		func(minReplicas int, autoscaling bool, multiAZ bool, isHostedCp bool, clusterVersion string, hasError bool, errorMessage string) {
+			privateSubnetsCount := 0
+			if isHostedCp || multiAZ {
+				// For HCP or multi-AZ, need private subnets
+				privateSubnetsCount = 1
+				if multiAZ {
+					privateSubnetsCount = 3
+				}
+			}
+			replicaSizeValidation := &ReplicaSizeValidation{
+				ClusterVersion:      clusterVersion,
+				MultiAz:             multiAZ,
+				Autoscaling:         autoscaling,
+				IsHostedCp:          isHostedCp,
+				PrivateSubnetsCount: privateSubnetsCount,
+			}
+			err := replicaSizeValidation.MinReplicaValidatorOnClusterCreate()(minReplicas)
+			if hasError {
+				Expect(err).To(HaveOccurred())
+				if errorMessage != "" {
+					Expect(err.Error()).To(ContainSubstring(errorMessage))
+				}
+			} else {
+				Expect(err).ToNot(HaveOccurred())
+			}
+		},
+		Entry("HCP cluster without autoscaling - 1 replica should fail",
+			1,
+			false,
+			false,
+			true,
+			"openshift-v4.14.14",
+			true,
+			"hosted Control Plane clusters require a minimum of 2 nodes, but 1 was requested",
+		),
+		Entry("HCP cluster without autoscaling - 0 replicas should fail",
+			0,
+			false,
+			false,
+			true,
+			"openshift-v4.14.14",
+			true,
+			"hosted Control Plane clusters require a minimum of 2 nodes, but 0 was requested",
+		),
+		Entry("HCP cluster without autoscaling - 2 replicas should succeed",
+			2,
+			false,
+			false,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("HCP cluster without autoscaling - 3 replicas should succeed",
+			3,
+			false,
+			false,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("HCP cluster with autoscaling - 1 replica should succeed (autoscaling enabled)",
+			1,
+			true,
+			false,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("HCP cluster with autoscaling - 0 replicas should succeed (autoscaling enabled)",
+			0,
+			true,
+			false,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("Classic cluster without autoscaling - 2 replicas should succeed (not HCP)",
+			2,
+			false,
+			false,
+			false,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("HCP cluster - exceeding max nodes limit (501 nodes) should fail",
+			501,
+			false,
+			false,
+			true,
+			"v4.14.0",
+			true,
+			"should provide an integer number less than or equal to '500'",
+		),
+		Entry("HCP cluster - at max nodes limit (500 nodes) should succeed",
+			500,
+			false,
+			false,
+			true,
+			"v4.14.0",
+			false,
+			"",
+		),
+		Entry("Classic cluster - exceeding max nodes limit (250 nodes) should fail",
+			250,
+			false,
+			false,
+			false,
+			"v4.14.14",
+			true,
+			"should provide an integer number less than or equal to '249'",
+		),
+		Entry("Multi-AZ HCP cluster - 3 replicas should succeed",
+			3,
+			true,
+			true,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("Multi-AZ HCP cluster - 2 replicas should fail (not multiple of 3)",
+			2,
+			true,
+			true,
+			true,
+			"openshift-v4.14.14",
+			true,
+			"",
+		),
+	)
+
+	DescribeTable("MaxReplicaValidatorOnClusterCreate validation",
+		func(minReplicas int, maxReplicas int, multiAZ bool, isHostedCp bool, clusterVersion string, hasError bool, errorMessage string) {
+			privateSubnetsCount := 0
+			if isHostedCp || multiAZ {
+				// For HCP or multi-AZ, need private subnets
+				privateSubnetsCount = 1
+				if multiAZ {
+					privateSubnetsCount = 3
+				}
+			}
+			replicaSizeValidation := &ReplicaSizeValidation{
+				MinReplicas:         minReplicas,
+				ClusterVersion:      clusterVersion,
+				MultiAz:             multiAZ,
+				IsHostedCp:          isHostedCp,
+				PrivateSubnetsCount: privateSubnetsCount,
+			}
+			err := replicaSizeValidation.MaxReplicaValidatorOnClusterCreate()(maxReplicas)
+			if hasError {
+				Expect(err).To(HaveOccurred())
+				if errorMessage != "" {
+					Expect(err.Error()).To(ContainSubstring(errorMessage))
+				}
+			} else {
+				Expect(err).ToNot(HaveOccurred())
+			}
+		},
+		Entry("Max > Min should succeed",
+			2,
+			5,
+			false,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("Max = Min should succeed",
+			3,
+			3,
+			false,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+		Entry("Max < Min should fail",
+			5,
+			2,
+			false,
+			true,
+			"openshift-v4.14.14",
+			true,
+			"",
+		),
+		Entry("HCP cluster - exceeding max nodes limit (501 nodes) should fail",
+			2,
+			501,
+			false,
+			true,
+			"v4.14.0",
+			true,
+			"should provide an integer number less than or equal to '500'",
+		),
+		Entry("HCP cluster - at max nodes limit (500 nodes) should succeed",
+			2,
+			500,
+			false,
+			true,
+			"v4.14.0",
+			false,
+			"",
+		),
+		Entry("Classic cluster - exceeding max nodes limit (250 nodes) should fail",
+			2,
+			250,
+			false,
+			false,
+			"v4.14.14",
+			true,
+			"should provide an integer number less than or equal to '249'",
+		),
+		Entry("Multi-AZ - max replicas not multiple of 3 should fail",
+			3,
+			5,
+			true,
+			true,
+			"openshift-v4.14.14",
+			true,
+			"",
+		),
+		Entry("Multi-AZ - max replicas multiple of 3 should succeed",
+			3,
+			6,
+			true,
+			true,
+			"openshift-v4.14.14",
+			false,
+			"",
+		),
+	)
 })
 
 var _ = Describe("CreateAwsNodePoolBuilder", func() {
