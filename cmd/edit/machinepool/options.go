@@ -53,7 +53,7 @@ func (m *EditMachinepoolOptions) Bind(args *EditMachinepoolUserOptions, argv []s
 	}
 
 	if m.args.machinepool == "" {
-		return fmt.Errorf("You need to specify a machine pool name")
+		return fmt.Errorf("you need to specify a machine pool name")
 	}
 
 	if m.args.labels != "" {
@@ -65,16 +65,16 @@ func (m *EditMachinepoolOptions) Bind(args *EditMachinepoolUserOptions, argv []s
 
 	if m.args.autoscalingEnabled {
 		if m.args.minReplicas < 0 {
-			return fmt.Errorf("Min replicas must be a number that is 0 or greater when autoscaling is enabled")
+			return fmt.Errorf("min-replicas must be a non-negative number when autoscaling is enabled")
 		}
 		if m.args.maxReplicas < 0 {
-			return fmt.Errorf("Max replicas must be a number that is 0 or greater when autoscaling is enabled")
+			return fmt.Errorf("max-replicas must be a non-negative number when autoscaling is enabled")
 		}
 		if m.args.minReplicas > m.args.maxReplicas {
-			return fmt.Errorf("Min replicas must be less than max replicas")
+			return fmt.Errorf("max-replicas must be greater or equal to min-replicas")
 		}
 		if m.args.replicas != 0 {
-			return fmt.Errorf("Autoscaling enabled on machine pool '%s'. can't set replicas", m.Machinepool())
+			return fmt.Errorf("replicas can't be set when autoscaling is enabled")
 		}
 	}
 

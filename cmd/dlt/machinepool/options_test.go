@@ -30,21 +30,21 @@ var _ = Describe("Test delete machinepool options", func() {
 			args.machinepool = ""
 			err := options.Bind(args, []string{})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("You need to specify a machine pool name"))
+			Expect(err.Error()).To(Equal("you need to specify a machine pool name"))
 		})
 		It("Fail to bind args due to invalid machinepool name", func() {
 			args.machinepool = "%asd"
 			err := options.Bind(args, []string{})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Expected a valid identifier for the machine pool"))
+			Expect(err.Error()).To(Equal("expected a valid identifier for the machine pool"))
 			args.machinepool = "1asd"
 			err = options.Bind(args, []string{})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Expected a valid identifier for the machine pool"))
+			Expect(err.Error()).To(Equal("expected a valid identifier for the machine pool"))
 			args.machinepool = "asd123$"
 			err = options.Bind(args, []string{})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Expected a valid identifier for the machine pool"))
+			Expect(err.Error()).To(Equal("expected a valid identifier for the machine pool"))
 		})
 		It("Test Bind with argv instead of normal args (single arg, no flag for machinepool)", func() {
 			argv := []string{"test-id"}

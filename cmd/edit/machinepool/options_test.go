@@ -28,7 +28,7 @@ var _ = Describe("Test edit machinepool options", func() {
 		It("Fail to bind args due to empty machinepool name", func() {
 			args.machinepool = ""
 			err := options.Bind(args, []string{})
-			Expect(err).To(MatchError("You need to specify a machine pool name"))
+			Expect(err).To(MatchError("you need to specify a machine pool name"))
 		})
 		It("Test Bind with argv instead of normal args (single arg, no flag for machinepool)", func() {
 			argv := []string{"test-id"}
@@ -57,7 +57,7 @@ var _ = Describe("Test edit machinepool options", func() {
 			args.autoscalingEnabled = true
 			args.machinepool = "test"
 			err := options.Bind(args, []string{})
-			Expect(err).To(MatchError("Min replicas must be a number that is 0 or greater when autoscaling is enabled"))
+			Expect(err).To(MatchError("min-replicas must be a non-negative number when autoscaling is enabled"))
 		})
 		It("Test max replicas negative value (fail)", func() {
 			args.maxReplicas = -1
@@ -65,7 +65,7 @@ var _ = Describe("Test edit machinepool options", func() {
 			args.autoscalingEnabled = true
 			args.machinepool = "test"
 			err := options.Bind(args, []string{})
-			Expect(err).To(MatchError("Max replicas must be a number that is 0 or greater when autoscaling is enabled"))
+			Expect(err).To(MatchError("max-replicas must be a non-negative number when autoscaling is enabled"))
 		})
 		It("Test min replicas > max replicas (fail)", func() {
 			args.maxReplicas = 1
@@ -73,7 +73,7 @@ var _ = Describe("Test edit machinepool options", func() {
 			args.autoscalingEnabled = true
 			args.machinepool = "test"
 			err := options.Bind(args, []string{})
-			Expect(err).To(MatchError("Min replicas must be less than max replicas"))
+			Expect(err).To(MatchError("max-replicas must be greater or equal to min-replicas"))
 		})
 	})
 })

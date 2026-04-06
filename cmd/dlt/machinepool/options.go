@@ -40,10 +40,10 @@ func (m *DeleteMachinepoolOptions) Bind(args *DeleteMachinepoolUserOptions, argv
 		}
 	}
 	if args.machinepool == "" {
-		return fmt.Errorf("You need to specify a machine pool name")
+		return fmt.Errorf("you need to specify a machine pool name")
 	}
 	if !machinepool.MachinePoolKeyRE.MatchString(args.machinepool) {
-		return fmt.Errorf("Expected a valid identifier for the machine pool")
+		return fmt.Errorf("expected a valid identifier for the machine pool")
 	}
 	m.args.machinepool = args.machinepool
 	return nil

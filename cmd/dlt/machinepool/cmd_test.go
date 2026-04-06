@@ -55,7 +55,7 @@ var _ = Describe("Delete machine pool", func() {
 			runner := DeleteMachinePoolRunner(NewDeleteMachinepoolUserOptions())
 			err := runner(context.Background(), t.RosaRuntime, NewDeleteMachinePoolCommand(), []string{})
 			Expect(err).ToNot(BeNil())
-			Expect(err.Error()).To(ContainSubstring("You need to specify a machine pool name"))
+			Expect(err.Error()).To(ContainSubstring("you need to specify a machine pool name"))
 		})
 		Context("Hypershift", func() {
 			It("Works without passing `--machinepool`", func() {

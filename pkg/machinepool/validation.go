@@ -27,11 +27,11 @@ func validateEditInput(poolType string, autoscaling bool, minReplicas int, maxRe
 	isReplicasSet bool, isAutoscalingSet bool, isMinReplicasSet bool, isMaxReplicasSet bool, id string) error {
 
 	if autoscaling && minReplicas < 0 && isMinReplicasSet {
-		return fmt.Errorf("min replicas must be a non-negative number when autoscaling is set")
+		return fmt.Errorf("min-replicas must be a non-negative number when autoscaling is enabled")
 	}
 
 	if autoscaling && maxReplicas < 0 && isMaxReplicasSet {
-		return fmt.Errorf("max replicas must be a non-negative number when autoscaling is set")
+		return fmt.Errorf("max-replicas must be a non-negative number when autoscaling is enabled")
 	}
 
 	if !autoscaling && replicas < 0 {
@@ -43,7 +43,7 @@ func validateEditInput(poolType string, autoscaling bool, minReplicas int, maxRe
 	}
 
 	if autoscaling && isAutoscalingSet && maxReplicas < minReplicas {
-		return fmt.Errorf("max replicas must not be greater than min replicas when autoscaling is enabled")
+		return fmt.Errorf("max-replicas must be greater or equal to min-replicas")
 	}
 
 	if !autoscaling && (isMinReplicasSet || isMaxReplicasSet) {

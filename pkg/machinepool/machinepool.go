@@ -651,6 +651,7 @@ func (m *machinePool) CreateNodePools(r *rosa.Runtime, cmd *cobra.Command, clust
 		ClusterVersion: cluster.OpenshiftVersion(),
 		MultiAz:        false,
 		IsHostedCp:     cluster.Hypershift().Enabled(),
+		Autoscaling:    args.AutoscalingEnabled,
 	}
 
 	minReplicas, maxReplicas, replicas, autoscaling, err := manageReplicas(cmd, args, replicaSizeValidation)
