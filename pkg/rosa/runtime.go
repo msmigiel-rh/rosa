@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
+	"github.com/openshift/rosa/pkg/output"
 	"github.com/openshift/rosa/pkg/reporter"
 )
 
@@ -26,10 +27,10 @@ type Runtime struct {
 }
 
 func NewRuntime() *Runtime {
-	reporter := reporter.CreateReporter()
+	r := reporter.CreateReporter()
 	logger := logging.NewLogger()
 	spinner := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	return &Runtime{Reporter: reporter, Logger: logger, Spinner: spinner}
+	return &Runtime{Reporter: output.NewStructuredReporter(r), Logger: logger, Spinner: spinner}
 }
 
 // WithOCM Adds an OCM client to the runtime. Requires a deferred call to `.Cleanup()` to close connections.
@@ -46,7 +47,7 @@ func (r *Runtime) WithAWS() *Runtime {
 	r.WithOCM()
 	err := r.OCMClient.ValidateAwsClientRegion()
 	if err != nil {
-		r.Reporter.Errorf("%v", err)
+		r.Reporter.Errorf("%s", err)
 		os.Exit(1)
 	}
 	if r.AWSClient == nil {

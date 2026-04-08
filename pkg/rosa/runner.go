@@ -28,7 +28,7 @@ func DefaultRunner(visitor RuntimeVisitor, runner CommandRunner) func(command *c
 
 		err := runner(ctx, r, command, args)
 		if err != nil {
-			r.Reporter.Errorf(err.Error())
+			r.Reporter.Errorf("%s", err)
 			os.Exit(1)
 		}
 	}

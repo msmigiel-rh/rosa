@@ -56,6 +56,13 @@ func HasFlag() bool {
 	return o != ""
 }
 
+// IsStructuredOutput returns true only when the --output flag is set to a
+// known structured format (json or yaml), preventing unsupported values from
+// being treated as structured output.
+func IsStructuredOutput() bool {
+	return o == JSON || o == YAML
+}
+
 // Enabled retursn a boolean flag that indicates if the interactive mode is enabled.
 func Output() string {
 	return o
