@@ -1,5 +1,5 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
-COPY . .
+FROM registry.access.redhat.com/ubi9/go-toolset:1.25.8 AS builder
+COPY --chown=1001:0 . .
 
 ENV GOFLAGS=-buildvcs=false
 RUN git config --global --add safe.directory /opt/app-root/src && \

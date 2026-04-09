@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 
 	idputils "github.com/openshift-online/ocm-common/pkg/idp/utils"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 )
 
 const (
@@ -78,7 +78,7 @@ func (c *Client) GetHTPasswdUserList(clusterID, htpasswdIDPId string) (*cmv1.HTP
 func (c *Client) AddHTPasswdUser(username, password, clusterID, idpID string) error {
 	hashedPwd, err := idputils.GenerateHTPasswdCompatibleHash(password)
 	if err != nil {
-		return fmt.Errorf("Failed to hash the password: %s", err)
+		return fmt.Errorf("failed to hash the password: %s", err)
 	}
 	htpasswdUser, _ := cmv1.NewHTPasswdUser().Username(username).HashedPassword(hashedPwd).Build()
 	response, err := c.ocm.ClustersMgmt().V1().Clusters().Cluster(clusterID).
@@ -182,7 +182,7 @@ func BuildOAuthURL(cluster *cmv1.Cluster, idpType cmv1.IdentityProviderType) (st
 			oauthURL = strings.Replace(apiURL, "api", "oauth", 1)
 		} else {
 			// Otherwise, remove the port and replace what is needed
-			u, err := url.ParseRequestURI(apiURL)
+			u, err := urlHelper.ParseRequestURI(apiURL)
 			if err != nil {
 				return oauthURL, err
 			}

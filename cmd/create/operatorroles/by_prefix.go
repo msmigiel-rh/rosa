@@ -2,7 +2,6 @@ package operatorroles
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
@@ -15,6 +14,7 @@ import (
 	awscb "github.com/openshift/rosa/pkg/aws/commandbuilder"
 	"github.com/openshift/rosa/pkg/aws/tags"
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 	interactiveOidc "github.com/openshift/rosa/pkg/interactive/oidc"
 	interactiveRoles "github.com/openshift/rosa/pkg/interactive/roles"
@@ -68,8 +68,12 @@ func handleOperatorRolesPrefixOptions(r *rosa.Runtime, cmd *cobra.Command) {
 	}
 }
 
-func CreateOperatorRoles(r *rosa.Runtime, env string, permissionsBoundary string, mode string, policies map[string]*cmv1.AWSSTSPolicy, defaultPolicyVersion string, isSharedVpc bool,
-	prefix string, hostedCp bool, installerRoleArn string, forcePolicyCreation bool, oidcConfigId string, sharedVpcRoleArn string, channelGroup string, vpcEndpointRoleArn string) error {
+func CreateOperatorRoles(
+	r *rosa.Runtime, env string, permissionsBoundary string, mode string,
+	policies map[string]*cmv1.AWSSTSPolicy, defaultPolicyVersion string, isSharedVpc bool,
+	prefix string, hostedCp bool, installerRoleArn string, forcePolicyCreation bool,
+	oidcConfigId string, sharedVpcRoleArn string, channelGroup string, vpcEndpointRoleArn string,
+) error {
 	args.prefix = prefix
 	args.hostedCp = hostedCp
 	args.installerRoleArn = installerRoleArn
@@ -80,7 +84,9 @@ func CreateOperatorRoles(r *rosa.Runtime, env string, permissionsBoundary string
 	args.channelGroup = channelGroup
 	args.vpcEndpointRoleArn = vpcEndpointRoleArn
 
-	return HandleOperatorRoleCreationByPrefix(r, env, permissionsBoundary, mode, policies, defaultPolicyVersion, isSharedVpc)
+	return HandleOperatorRoleCreationByPrefix(
+		r, env, permissionsBoundary, mode, policies, defaultPolicyVersion, isSharedVpc,
+	)
 }
 
 func HandleOperatorRoleCreationByPrefix(r *rosa.Runtime, env string,
@@ -281,7 +287,7 @@ func validateArgumentsOperatorRolesCreationByPrefix(r *rosa.Runtime, operatorRol
 		r.Reporter.Errorf("Expected valid operator roles prefix matching %s", aws.RoleNameRE.String())
 		os.Exit(1)
 	}
-	parsedURI, err := url.ParseRequestURI(oidcEndpointUrl)
+	parsedURI, err := urlHelper.ParseRequestURI(oidcEndpointUrl)
 	if err != nil {
 		r.Reporter.Errorf("%s", err)
 		os.Exit(1)
@@ -313,7 +319,7 @@ func createRolesByPrefix(r *rosa.Runtime, prefix string, permissionsBoundary str
 			return err
 		}
 		if roleName == "" {
-			return fmt.Errorf("Failed to find operator IAM role")
+			return fmt.Errorf("failed to find operator IAM role")
 		}
 
 		var policyArn string
@@ -325,13 +331,14 @@ func createRolesByPrefix(r *rosa.Runtime, prefix string, permissionsBoundary str
 				return err
 			}
 			if isHcpSharedVpc {
-				if credrequest == aws.IngressOperatorCloudCredentialsRoleType {
+				switch credrequest {
+				case aws.IngressOperatorCloudCredentialsRoleType:
 					sharedVpcPolicyArn, err := getHcpSharedVpcPolicy(r, sharedVpcRoleArn, defaultPolicyVersion)
 					if err != nil {
 						return err
 					}
 					policyArns = append(policyArns, sharedVpcPolicyArn)
-				} else if credrequest == aws.ControlPlaneCloudCredentialsRoleType {
+				case aws.ControlPlaneCloudCredentialsRoleType:
 					for _, arn := range []string{sharedVpcEndpointRoleArn, sharedVpcRoleArn} {
 						sharedVpcPolicyArn, err := getHcpSharedVpcPolicy(r, arn, defaultPolicyVersion)
 						if err != nil {

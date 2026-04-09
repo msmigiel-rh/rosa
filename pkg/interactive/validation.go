@@ -21,7 +21,7 @@ package interactive
 import (
 	"fmt"
 	"net"
-	"net/url"
+	neturl "net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -37,6 +37,7 @@ import (
 
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/ocm"
 )
 
@@ -95,7 +96,7 @@ func IsURLHttps(val interface{}) error {
 	return nil
 }
 
-func _isUrl(val interface{}) (*url.URL, error) {
+func _isUrl(val interface{}) (*neturl.URL, error) {
 	if val == nil {
 		return nil, nil
 	}
@@ -106,7 +107,7 @@ func _isUrl(val interface{}) (*url.URL, error) {
 	if s == "" {
 		return nil, nil
 	}
-	parsedUri, err := url.ParseRequestURI(fmt.Sprintf("%v", val))
+	parsedUri, err := urlHelper.ParseRequestURI(fmt.Sprintf("%v", val))
 	return parsedUri, err
 }
 

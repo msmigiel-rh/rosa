@@ -19,13 +19,14 @@ package idp
 import (
 	"errors"
 	"fmt"
-	"net/url"
+	neturl "net/url"
 	"os"
 	"strings"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
 
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 	"github.com/openshift/rosa/pkg/ocm"
 )
@@ -70,12 +71,13 @@ func buildGithubIdp(cmd *cobra.Command,
 			Required: true,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid option: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid option: %s", err)
 		}
 	}
 
 	if interactive.Enabled() {
-		if restrictType == "organizations" {
+		switch restrictType {
+		case "organizations":
 			organizations, err = interactive.GetString(interactive.Input{
 				Question: "GitHub organizations",
 				Help:     fmt.Sprintf("%s\n%s", cmd.Flags().Lookup("organizations").Usage, orgHelp),
@@ -83,9 +85,9 @@ func buildGithubIdp(cmd *cobra.Command,
 				Required: true,
 			})
 			if err != nil {
-				return idpBuilder, fmt.Errorf("Expected a valid GitHub organization: %s", err)
+				return idpBuilder, fmt.Errorf("expected a valid GitHub organization: %s", err)
 			}
-		} else if restrictType == "teams" {
+		case "teams":
 			teams, err = interactive.GetString(interactive.Input{
 				Question: "GitHub teams",
 				Help:     fmt.Sprintf("%s%s", cmd.Flags().Lookup("teams").Usage, orgHelp),
@@ -95,14 +97,14 @@ func buildGithubIdp(cmd *cobra.Command,
 					func(val interface{}) error {
 						parts := strings.Split(fmt.Sprintf("%v", val), "/")
 						if len(parts) != 2 {
-							return fmt.Errorf("Expected a GitHub team to follow the form '<org>/<team>'")
+							return fmt.Errorf("expected a GitHub team to follow the form '<org>/<team>'")
 						}
 						return nil
 					},
 				},
 			})
 			if err != nil {
-				return idpBuilder, fmt.Errorf("Expected a valid GitHub organization: %s", err)
+				return idpBuilder, fmt.Errorf("expected a valid GitHub organization: %s", err)
 			}
 		}
 	}
@@ -123,21 +125,21 @@ func buildGithubIdp(cmd *cobra.Command,
 			registerURLBase = fmt.Sprintf("https://github.com/organizations/%s/settings/applications/new", teamOrg)
 		}
 
-		registerURL, err := url.Parse(registerURLBase)
+		registerURL, err := urlHelper.Parse(registerURLBase)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Error parsing URL: %v", err)
+			return idpBuilder, fmt.Errorf("error parsing URL: %v", err)
 		}
 
 		// Populate fields in the GitHub registration form
 		oauthURL, err := ocm.BuildOAuthURL(cluster, idpType)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Error building OAuth URL: %v", err)
+			return idpBuilder, fmt.Errorf("error building OAuth URL: %v", err)
 		}
 		oauthApplicationURL := oauthURL
 		if ocm.IsConsoleAvailable(cluster) {
 			oauthApplicationURL = cluster.Console().URL()
 		}
-		urlParams := url.Values{}
+		urlParams := neturl.Values{}
 		urlParams.Add("oauth_application[name]", cluster.Name())
 		urlParams.Add("oauth_application[url]", oauthApplicationURL)
 		urlParams.Add("oauth_application[callback_url]", oauthURL+"/oauth2callback/"+idpName)
@@ -163,7 +165,7 @@ func buildGithubIdp(cmd *cobra.Command,
 			Required: true,
 		})
 		if err != nil {
-			return idpBuilder, errors.New("Expected a GitHub application Client ID")
+			return idpBuilder, errors.New("expected a GitHub application client ID")
 		}
 
 		if clientSecret == "" {
@@ -173,7 +175,7 @@ func buildGithubIdp(cmd *cobra.Command,
 				Required: true,
 			})
 			if err != nil {
-				return idpBuilder, errors.New("Expected a GitHub application Client Secret")
+				return idpBuilder, errors.New("expected a GitHub application client secret")
 			}
 		}
 	}
@@ -194,7 +196,7 @@ func buildGithubIdp(cmd *cobra.Command,
 			},
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid Hostname: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid hostname: %s", err)
 		}
 	}
 	if githubHostname == "" && args.caPath != "" {
@@ -216,7 +218,7 @@ func buildGithubIdp(cmd *cobra.Command,
 				Default:  caPath,
 			})
 			if err != nil {
-				return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+				return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 			}
 		}
 		// Get certificate contents
@@ -224,7 +226,7 @@ func buildGithubIdp(cmd *cobra.Command,
 		if caPath != "" {
 			cert, err := os.ReadFile(caPath)
 			if err != nil {
-				return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+				return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 			}
 			ca = string(cert)
 		}

@@ -19,7 +19,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -27,6 +26,7 @@ import (
 	awserr "github.com/openshift-online/ocm-common/pkg/aws/errors"
 
 	"github.com/openshift/rosa/pkg/aws/tags"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 )
 
 const (
@@ -65,7 +65,7 @@ func (c *awsClient) CreateOpenIDConnectProvider(providerURL string, thumbprint s
 }
 
 func (c *awsClient) HasOpenIDConnectProvider(issuerURL string, partition string, accountID string) (bool, error) {
-	parsedIssuerURL, err := url.ParseRequestURI(issuerURL)
+	parsedIssuerURL, err := urlHelper.ParseRequestURI(issuerURL)
 	if err != nil {
 		return false, err
 	}
@@ -82,7 +82,7 @@ func (c *awsClient) HasOpenIDConnectProvider(issuerURL string, partition string,
 		return false, err
 	}
 	if aws.ToString(output.Url) != providerURL {
-		return false, fmt.Errorf("The OIDC provider exists but is misconfigured")
+		return false, fmt.Errorf("the OIDC provider exists but is misconfigured")
 	}
 	return true, nil
 }
@@ -93,7 +93,7 @@ func (c *awsClient) DeleteOpenIDConnectProvider(oidcProviderARN string) error {
 	})
 	if err != nil {
 		if awserr.IsNoSuchEntityException(err) {
-			return fmt.Errorf("The OIDC provider '%s' does not exist", oidcProviderARN)
+			return fmt.Errorf("the OIDC provider '%s' does not exist", oidcProviderARN)
 		}
 		return err
 	}

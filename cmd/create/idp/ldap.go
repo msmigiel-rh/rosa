@@ -19,13 +19,13 @@ package idp
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
 
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 )
 
@@ -66,7 +66,7 @@ func buildLdapIdp(cmd *cobra.Command,
 			},
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid LDAP URL: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid LDAP URL: %s", err)
 		}
 	}
 	err = validateLdapURL(ldapURL)
@@ -84,11 +84,11 @@ func buildLdapIdp(cmd *cobra.Command,
 			Default:  !needsSecure,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid insecure value: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid insecure value: %s", err)
 		}
 	}
 	if needsSecure && ldapInsecure {
-		return idpBuilder, fmt.Errorf("Cannot use insecure connection on ldaps URLs")
+		return idpBuilder, fmt.Errorf("cannot use insecure connection on ldaps URLs")
 	}
 
 	caPath := args.caPath
@@ -99,18 +99,18 @@ func buildLdapIdp(cmd *cobra.Command,
 			Default:  caPath,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 		}
 	}
 	// Get certificate contents
 	ca := ""
 	if caPath != "" {
 		if ldapInsecure {
-			return idpBuilder, fmt.Errorf("Cannot use certificate bundle with an insecure connection")
+			return idpBuilder, fmt.Errorf("cannot use certificate bundle with an insecure connection")
 		}
 		cert, err := os.ReadFile(caPath)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 		}
 		ca = string(cert)
 	}
@@ -129,7 +129,7 @@ func buildLdapIdp(cmd *cobra.Command,
 			Default:  ldapBindDN,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid DN to bind with: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid DN to bind with: %s", err)
 		}
 
 		if ldapBindDN != "" {
@@ -139,7 +139,7 @@ func buildLdapIdp(cmd *cobra.Command,
 				Required: true,
 			})
 			if err != nil {
-				return idpBuilder, fmt.Errorf("Expected a valid password to bind with: %s", err)
+				return idpBuilder, fmt.Errorf("expected a valid password to bind with: %s", err)
 			}
 		}
 	}
@@ -161,7 +161,7 @@ func buildLdapIdp(cmd *cobra.Command,
 			Required: true,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 	}
 	if ldapIDs == "" {
@@ -178,7 +178,7 @@ func buildLdapIdp(cmd *cobra.Command,
 			Default:  ldapUsernames,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 
 		ldapDisplayNames, err = interactive.GetString(interactive.Input{
@@ -187,7 +187,7 @@ func buildLdapIdp(cmd *cobra.Command,
 			Default:  ldapDisplayNames,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 
 		ldapEmails, err = interactive.GetString(interactive.Input{
@@ -196,7 +196,7 @@ func buildLdapIdp(cmd *cobra.Command,
 			Default:  ldapEmails,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 	}
 
@@ -244,12 +244,12 @@ func buildLdapIdp(cmd *cobra.Command,
 
 func validateLdapURL(val interface{}) error {
 	ldapURL := fmt.Sprintf("%v", val)
-	parsedLdapURL, err := url.ParseRequestURI(ldapURL)
+	parsedLdapURL, err := urlHelper.ParseRequestURI(ldapURL)
 	if err != nil {
-		return fmt.Errorf("Expected a valid LDAP URL: %v", err)
+		return fmt.Errorf("expected a valid LDAP URL: %v", err)
 	}
 	if parsedLdapURL.Scheme != "ldap" && parsedLdapURL.Scheme != "ldaps" {
-		return errors.New("Expected LDAP URL to have an ldap:// or ldaps:// scheme")
+		return errors.New("expected LDAP URL to have an ldap:// or ldaps:// scheme")
 	}
 	return nil
 }

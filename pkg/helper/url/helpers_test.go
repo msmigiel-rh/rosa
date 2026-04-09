@@ -105,3 +105,39 @@ var _ = Describe("ValidateURLCredentials", func() {
 		})
 	})
 })
+
+var _ = Describe("Parse helpers", func() {
+	Describe("Parse", func() {
+		It("accepts a valid IPv6 host literal", func() {
+			parsedURL, err := Parse("http://[::1]:8080")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parsedURL.Host).To(Equal("[::1]:8080"))
+		})
+
+		It("rejects an IPv6 literal that is not at the start of the host", func() {
+			_, err := Parse("http://example.com[::1]:8080")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("invalid IP-literal"))
+		})
+
+		It("accepts a valid IPv6 host literal after userinfo", func() {
+			parsedURL, err := Parse("http://user:pass@[::1]:8080")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parsedURL.Host).To(Equal("[::1]:8080"))
+		})
+	})
+
+	Describe("ParseRequestURI", func() {
+		It("accepts a valid absolute path", func() {
+			parsedURL, err := ParseRequestURI("/api/clusters")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parsedURL.Path).To(Equal("/api/clusters"))
+		})
+
+		It("rejects an IPv6 literal that is not at the start of the host", func() {
+			_, err := ParseRequestURI("https://api.example.com[::1]")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("invalid IP-literal"))
+		})
+	})
+})

@@ -18,6 +18,7 @@ package url
 
 import (
 	"fmt"
+	neturl "net/url"
 	"strings"
 )
 
@@ -60,4 +61,53 @@ func checkForInvalidChars(value, field string) error {
 	}
 
 	return nil
+}
+
+// Parse mirrors net/url.Parse and rejects malformed IPv6 host literals early.
+func Parse(rawURL string) (*neturl.URL, error) {
+	return parse(rawURL, neturl.Parse)
+}
+
+// ParseRequestURI mirrors net/url.ParseRequestURI and rejects malformed IPv6 host literals early.
+func ParseRequestURI(rawURL string) (*neturl.URL, error) {
+	return parse(rawURL, neturl.ParseRequestURI)
+}
+
+func parse(rawURL string, parser func(string) (*neturl.URL, error)) (*neturl.URL, error) {
+	if err := validateIPv6LiteralHost(rawURL); err != nil {
+		return nil, err
+	}
+
+	return parser(rawURL)
+}
+
+func validateIPv6LiteralHost(rawURL string) error {
+	authority, hasAuthority := getAuthority(rawURL)
+	if !hasAuthority {
+		return nil
+	}
+
+	if hostStart := strings.LastIndex(authority, "@"); hostStart != -1 {
+		authority = authority[hostStart+1:]
+	}
+
+	if openBracketIdx := strings.LastIndex(authority, "["); openBracketIdx > 0 {
+		return fmt.Errorf("invalid IP-literal")
+	}
+
+	return nil
+}
+
+func getAuthority(rawURL string) (string, bool) {
+	schemeIdx := strings.Index(rawURL, "://")
+	if schemeIdx == -1 {
+		return "", false
+	}
+
+	authority := rawURL[schemeIdx+len("://"):]
+	if endIdx := strings.IndexAny(authority, "/?#"); endIdx != -1 {
+		authority = authority[:endIdx]
+	}
+
+	return authority, true
 }

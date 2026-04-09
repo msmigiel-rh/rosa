@@ -35,17 +35,17 @@ $(GO_BINDATA): $(BINGO_DIR)/go-bindata.mod
 	@echo "(re)installing $(GOBIN)/go-bindata-v3.1.2+incompatible"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=go-bindata.mod -o=$(GOBIN)/go-bindata-v3.1.2+incompatible "github.com/go-bindata/go-bindata/go-bindata"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.6.1
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.11.4
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v2.6.1"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.6.1 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v2.11.4"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.11.4 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 
-GORELEASER := $(GOBIN)/goreleaser-v1.25.1
+GORELEASER := $(GOBIN)/goreleaser-v2.15.1
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/goreleaser-v1.25.1"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v1.25.1 "github.com/goreleaser/goreleaser"
+	@echo "(re)installing $(GOBIN)/goreleaser-v2.15.1"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v2.15.1 "github.com/goreleaser/goreleaser/v2"
 
 MOCKGEN := $(GOBIN)/mockgen-v0.4.0
 $(MOCKGEN): $(BINGO_DIR)/mockgen.mod
