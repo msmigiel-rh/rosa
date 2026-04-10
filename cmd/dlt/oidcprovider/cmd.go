@@ -18,7 +18,6 @@ package oidcprovider
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -26,6 +25,7 @@ import (
 
 	awscb "github.com/openshift/rosa/pkg/aws/commandbuilder"
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 	"github.com/openshift/rosa/pkg/interactive/confirm"
 	interactiveOidc "github.com/openshift/rosa/pkg/interactive/oidc"
@@ -168,7 +168,11 @@ func run(cmd *cobra.Command, argv []string) {
 			}
 			oidcEndpointUrl = oidcConfig.IssuerUrl()
 		}
-		parsedURI, _ := url.ParseRequestURI(oidcEndpointUrl)
+		parsedURI, err := urlHelper.ParseRequestURI(oidcEndpointUrl)
+		if err != nil {
+			r.Reporter.Errorf("Expected a valid OIDC endpoint URL '%s': %v", oidcEndpointUrl, err)
+			os.Exit(1)
+		}
 		if parsedURI.Scheme != helper.ProtocolHttps {
 			r.Reporter.Errorf("Expected OIDC endpoint URL '%s' to use an https:// scheme", oidcEndpointUrl)
 			os.Exit(1)

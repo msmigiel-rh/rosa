@@ -19,13 +19,13 @@ package idp
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 	"github.com/openshift/rosa/pkg/ocm"
 )
@@ -54,7 +54,7 @@ func buildGitlabIdp(cmd *cobra.Command,
 			},
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid GitLab provider URL: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid GitLab provider URL: %s", err)
 		}
 	}
 	err = validateGitlabHostURL(gitlabURL)
@@ -66,7 +66,7 @@ func buildGitlabIdp(cmd *cobra.Command,
 		instructionsURL := fmt.Sprintf("%s/profile/applications", gitlabURL)
 		oauthURL, err := ocm.BuildOAuthURL(cluster, idpType)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Error building OAuth URL: %v", err)
+			return idpBuilder, fmt.Errorf("error building OAuth URL: %v", err)
 		}
 		err = interactive.PrintHelp(interactive.Help{
 			Message: "To use GitLab as an identity provider, register the application by opening:",
@@ -94,7 +94,7 @@ func buildGitlabIdp(cmd *cobra.Command,
 			Required: true,
 		})
 		if err != nil {
-			return idpBuilder, errors.New("Expected a GitLab application Application ID")
+			return idpBuilder, errors.New("expected a GitLab application ID")
 		}
 
 		if clientSecret == "" {
@@ -104,7 +104,7 @@ func buildGitlabIdp(cmd *cobra.Command,
 				Required: true,
 			})
 			if err != nil {
-				return idpBuilder, errors.New("Expected a GitLab application Secret")
+				return idpBuilder, errors.New("expected a GitLab application secret")
 			}
 		}
 	}
@@ -117,7 +117,7 @@ func buildGitlabIdp(cmd *cobra.Command,
 			Default:  caPath,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 		}
 	}
 	// Get certificate contents
@@ -125,7 +125,7 @@ func buildGitlabIdp(cmd *cobra.Command,
 	if caPath != "" {
 		cert, err := os.ReadFile(caPath)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 		}
 		ca = string(cert)
 	}
@@ -158,12 +158,12 @@ func buildGitlabIdp(cmd *cobra.Command,
 
 func validateGitlabHostURL(val interface{}) error {
 	gitlabURL := fmt.Sprintf("%v", val)
-	parsedIssuerURL, err := url.ParseRequestURI(gitlabURL)
+	parsedIssuerURL, err := urlHelper.ParseRequestURI(gitlabURL)
 	if err != nil {
-		return fmt.Errorf("Expected a valid GitLab provider URL: %s", err)
+		return fmt.Errorf("expected a valid GitLab provider URL: %s", err)
 	}
 	if parsedIssuerURL.Scheme != helper.ProtocolHttps {
-		return errors.New("Expected GitLab provider URL to use an https:// scheme")
+		return errors.New("expected GitLab provider URL to use an https:// scheme")
 	}
 	if parsedIssuerURL.RawQuery != "" {
 		return errors.New("GitLab provider URL must not have query parameters")

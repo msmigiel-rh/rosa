@@ -21,13 +21,13 @@ package ocm
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 
 	sdk "github.com/openshift-online/ocm-sdk-go"
 
 	"github.com/openshift/rosa/pkg/config"
 	"github.com/openshift/rosa/pkg/fedramp"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 )
 
 const Production = "production"
@@ -73,14 +73,14 @@ func ResolveGatewayUrl(optionalParsedCliFlagValue string, optionalParsedConfig *
 		source = "config"
 	}
 
-	url, err := url.ParseRequestURI(gatewayURL)
+	parsedURL, err := urlHelper.ParseRequestURI(gatewayURL)
 	if err != nil {
 		return "", fmt.Errorf(
 			"%w\n\nURL Source: %s\nExpected an absolute URI/path (e.g. %s) or a case-sensitive alias, one of: [%s]",
 			err, source, sdk.DefaultURL, strings.Join(ValidOCMUrlAliases(), ", "))
 	}
 
-	return url.String(), nil
+	return parsedURL.String(), nil
 }
 
 func GetEnv() (string, error) {
@@ -98,11 +98,13 @@ func GetEnv() (string, error) {
 	if strings.HasSuffix(strings.TrimSuffix(cfg.URL, "/"), "openshift.com") {
 		regionDiscoveryUrl, err := sdk.DetermineRegionDiscoveryUrl(cfg.URL)
 		if err == nil {
-			discoveryGatewayUrl, _ := url.Parse(regionDiscoveryUrl)
-			// Check for URL aliases
-			for env, api := range urlAliases {
-				if api == fmt.Sprintf("%s://%s", discoveryGatewayUrl.Scheme, discoveryGatewayUrl.Host) {
-					return env, nil
+			discoveryGatewayURL, parseErr := urlHelper.Parse(regionDiscoveryUrl)
+			if parseErr == nil {
+				// Check for URL aliases
+				for env, api := range urlAliases {
+					if api == fmt.Sprintf("%s://%s", discoveryGatewayURL.Scheme, discoveryGatewayURL.Host) {
+						return env, nil
+					}
 				}
 			}
 		}
@@ -122,5 +124,5 @@ func GetEnv() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("Invalid OCM API")
+	return "", fmt.Errorf("invalid OCM API")
 }

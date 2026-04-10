@@ -22,7 +22,6 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"reflect"
 	"regexp"
@@ -149,7 +148,7 @@ func validateProxyURL(proxyURL string, proxyType string, expectedScheme string) 
 		return fmt.Errorf("invalid %s value: %s", proxyType, err)
 	}
 
-	parsedURL, err := url.Parse(proxyURL)
+	parsedURL, err := urlHelper.Parse(proxyURL)
 	if err != nil {
 		return fmt.Errorf("invalid %s value: %v", proxyType, err)
 	}
@@ -939,7 +938,7 @@ func ValidateOperatorRolesMatchOidcProvider(reporter reporter.Logger, awsClient 
 	clusterVersion string, expectedOperatorRolePath string,
 	accountRolesHasManagedPolicies bool, logOperatorRoles bool) error {
 	operatorIAMRoles := operatorIAMRoleList
-	parsedUrl, err := url.Parse(oidcEndpointUrl)
+	parsedUrl, err := urlHelper.Parse(oidcEndpointUrl)
 	if err != nil {
 		return err
 	}

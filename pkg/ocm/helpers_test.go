@@ -814,6 +814,12 @@ var _ = Describe("ValidateHTTPProxy", func() {
 		Expect(err.Error()).To(Equal("invalid http-proxy value: proxy URL should not contain a path '/.0.0.161:9999999'"))
 	})
 
+	It("rejects proxy with malformed IPv6 host literal", func() {
+		err := ValidateHTTPProxy("http://proxy.example.com[::1]:8080")
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal("invalid http-proxy value: invalid IP-literal"))
+	})
+
 	It("rejects proxy URL with path", func() {
 		err := ValidateHTTPProxy("http://proxy.example.com:8080/path")
 		Expect(err).To(HaveOccurred())
@@ -898,6 +904,12 @@ var _ = Describe("ValidateHTTPSProxy", func() {
 		err := ValidateHTTPSProxy("https://10/.0.0.161:9999999")
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(Equal("invalid https-proxy value: proxy URL should not contain a path '/.0.0.161:9999999'"))
+	})
+
+	It("rejects proxy with malformed IPv6 host literal", func() {
+		err := ValidateHTTPSProxy("https://proxy.example.com[::1]:8080")
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Equal("invalid https-proxy value: invalid IP-literal"))
 	})
 
 	It("rejects proxy URL with path", func() {

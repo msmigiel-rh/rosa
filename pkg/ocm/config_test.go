@@ -26,6 +26,7 @@ var _ = Describe("Gateway URL Resolution", func() {
 		//nolint:misspell // intentional misspellings
 		"productin", "PRod", //alias typo
 		"localhost", "192.168.1.1", "api.openshift.com", //ip address/hostname without protocol
+		"https://api.example.com[::1]",
 	}
 	When("Resolving gatewayURL", func() {
 		It("Priority 1 - cli arg valid url aliases", func() {

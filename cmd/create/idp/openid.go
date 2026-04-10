@@ -19,7 +19,6 @@ package idp
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 	"github.com/openshift/rosa/pkg/ocm"
 )
@@ -55,7 +55,7 @@ func buildOpenidIdp(cmd *cobra.Command,
 		instructionsURL := instructionsURLBase + "config-openid-idp_config-identity-providers"
 		oauthURL, err := ocm.BuildOAuthURL(cluster, idpType)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Error building OAuth URL: %v", err)
+			return idpBuilder, fmt.Errorf("error building OAuth URL: %v", err)
 		}
 		err = interactive.PrintHelp(interactive.Help{
 			Message: "To use OpenID as an identity provider, you must first register the application:",
@@ -80,7 +80,7 @@ func buildOpenidIdp(cmd *cobra.Command,
 			Required: true,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid application Client ID: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid application client ID: %s", err)
 		}
 	}
 
@@ -91,7 +91,7 @@ func buildOpenidIdp(cmd *cobra.Command,
 			Required: true,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid application Client Secret: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid application client secret: %s", err)
 		}
 	}
 
@@ -107,7 +107,7 @@ func buildOpenidIdp(cmd *cobra.Command,
 			},
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid OpenID Issuer URL: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid OpenID issuer URL: %s", err)
 		}
 	}
 
@@ -124,7 +124,7 @@ func buildOpenidIdp(cmd *cobra.Command,
 			Default:  caPath,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 		}
 	}
 	// Get certificate contents
@@ -132,7 +132,7 @@ func buildOpenidIdp(cmd *cobra.Command,
 	if caPath != "" {
 		cert, err := os.ReadFile(caPath)
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid certificate bundle: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid certificate bundle: %s", err)
 		}
 		ca = string(cert)
 	}
@@ -158,7 +158,7 @@ separated by commas.`,
 			Default:  email,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 		name, err = interactive.GetString(interactive.Input{
 			Question: "Name",
@@ -166,7 +166,7 @@ separated by commas.`,
 			Default:  name,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 		username, err = interactive.GetString(interactive.Input{
 			Question: "Preferred username",
@@ -174,7 +174,7 @@ separated by commas.`,
 			Default:  username,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 		groups, err = interactive.GetString(interactive.Input{
 			Question: "Groups",
@@ -182,11 +182,11 @@ separated by commas.`,
 			Default:  groups,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of attributes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of attributes: %s", err)
 		}
 	}
 	if email == "" && name == "" && username == "" && groups == "" {
-		return idpBuilder, errors.New("At least one claim is required: [email-claims name-claims username-claims " +
+		return idpBuilder, errors.New("at least one claim is required: [email-claims name-claims username-claims " +
 			"groups-claims]")
 	}
 
@@ -214,7 +214,7 @@ separated by commas.`,
 			Default:  scopes,
 		})
 		if err != nil {
-			return idpBuilder, fmt.Errorf("Expected a valid comma-separated list of scopes: %s", err)
+			return idpBuilder, fmt.Errorf("expected a valid comma-separated list of scopes: %s", err)
 		}
 	}
 
@@ -246,12 +246,12 @@ separated by commas.`,
 
 func validateOpenidIssuerURL(val interface{}) error {
 	issuerURL := fmt.Sprintf("%v", val)
-	parsedIssuerURL, err := url.ParseRequestURI(issuerURL)
+	parsedIssuerURL, err := urlHelper.ParseRequestURI(issuerURL)
 	if err != nil {
-		return fmt.Errorf("Expected a valid OpenID issuer URL: %v", err)
+		return fmt.Errorf("expected a valid OpenID issuer URL: %v", err)
 	}
 	if parsedIssuerURL.Scheme != helper.ProtocolHttps {
-		return errors.New("Expected OpenID issuer URL to use an https:// scheme")
+		return errors.New("expected OpenID issuer URL to use an https:// scheme")
 	}
 	if parsedIssuerURL.RawQuery != "" {
 		return errors.New("OpenID issuer URL must not have query parameters")

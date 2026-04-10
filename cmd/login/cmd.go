@@ -18,7 +18,6 @@ package login
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -36,6 +35,7 @@ import (
 	"github.com/openshift/rosa/pkg/config"
 	"github.com/openshift/rosa/pkg/constants"
 	"github.com/openshift/rosa/pkg/fedramp"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/interactive"
 	"github.com/openshift/rosa/pkg/ocm"
 	"github.com/openshift/rosa/pkg/output"
@@ -192,7 +192,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 	if keyring, ok := config.IsKeyringManaged(); ok {
 		err := securestore.ValidateBackend(keyring)
 		if err != nil {
-			return fmt.Errorf("Error validating keyring: %v", err)
+			return fmt.Errorf("error validating keyring: %v", err)
 		}
 	}
 
@@ -221,7 +221,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 		}
 		token, err := authentication.InitiateAuthCode(oauthClientId)
 		if err != nil {
-			return fmt.Errorf("An error occurred while retrieving the token: %v", err)
+			return fmt.Errorf("an error occurred while retrieving the token: %v", err)
 		}
 		args.token = token
 		args.clientID = oauthClientId
@@ -232,7 +232,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 		}
 		_, err := deviceAuthConfig.InitiateDeviceAuth(ctx)
 		if err != nil {
-			return fmt.Errorf("An error occurred while initiating device auth: %v", err)
+			return fmt.Errorf("an error occurred while initiating device auth: %v", err)
 		}
 		deviceAuthResp := deviceAuthConfig.DeviceAuthResponse
 
@@ -241,7 +241,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 		r.Reporter.Infof("Checking status every %v seconds...", deviceAuthResp.Interval)
 		token, err := deviceAuthConfig.PollForTokenExchange(ctx)
 		if err != nil {
-			return fmt.Errorf("An error occurred while polling for token exchange: %v", err)
+			return fmt.Errorf("an error occurred while polling for token exchange: %v", err)
 		}
 		args.token = token
 		args.clientID = oauthClientId
@@ -250,7 +250,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 	// Load the configuration file:
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("Failed to load config file: %v", err)
+		return fmt.Errorf("failed to load config file: %v", err)
 	}
 	if cfg == nil || config.IsNotValid(cfg) {
 		cfg = new(config.Config)
@@ -280,7 +280,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 	if !haveReqs {
 		armed, err := cfg.Armed()
 		if err != nil {
-			return fmt.Errorf("Failed to verify configuration: %v", err)
+			return fmt.Errorf("failed to verify configuration: %v", err)
 		}
 		haveReqs = armed
 	}
@@ -293,13 +293,13 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 			Required: true,
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to parse token: %v", err)
+			return fmt.Errorf("failed to parse token: %v", err)
 		}
 		haveReqs = token != ""
 	}
 
 	if !haveReqs {
-		return fmt.Errorf("Failed to login to OCM. See 'rosa login --help' for information.")
+		return fmt.Errorf("failed to log in to OCM, see 'rosa login --help' for information")
 	}
 
 	// Red Hat SSO does not issue encrypted refresh tokens, but AWS Cognito does. If the token
@@ -402,13 +402,13 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 			// If a token has been provided parse it:
 			jwtToken, err := config.ParseToken(token)
 			if err != nil {
-				return fmt.Errorf("Failed to parse token: %v", err)
+				return fmt.Errorf("failed to parse token: %v", err)
 			}
 
 			// Put the token in the place of the configuration that corresponds to its type:
 			typ, err := tokenType(jwtToken)
 			if err != nil {
-				return fmt.Errorf("Failed to extract type from 'typ' claim of token: %v", err)
+				return fmt.Errorf("failed to extract type from 'typ' claim of token: %v", err)
 			}
 			switch typ {
 			case "Bearer", "":
@@ -418,7 +418,7 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 				cfg.AccessToken = ""
 				cfg.RefreshToken = token
 			default:
-				return fmt.Errorf("Don't know how to handle token type '%s' in token", typ)
+				return fmt.Errorf("don't know how to handle token type '%s' in token", typ)
 			}
 		}
 	}
@@ -433,14 +433,14 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 			reattemptLogin(cmd, argv)
 			return nil
 		} else {
-			return fmt.Errorf("Failed to create OCM connection: %v", err)
+			return fmt.Errorf("failed to create OCM connection: %v", err)
 		}
 	}
 
 	accessToken, refreshToken, err := r.OCMClient.GetConnectionTokens()
 	if err != nil {
 		return fmt.Errorf(
-			"Failed to get token. Your session might be expired: %v\nGet a new offline access token at %s",
+			"failed to get token; your session might be expired: %v\nget a new offline access token at %s",
 			err, uiTokenPage)
 	}
 	reAttempt = false
@@ -449,14 +449,14 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 	cfg.RefreshToken = refreshToken
 	err = config.Save(cfg)
 	if err != nil {
-		return fmt.Errorf("Failed to save config file: %v", err)
+		return fmt.Errorf("failed to save config file: %v", err)
 	}
 
 	username, err := cfg.GetData("preferred_username")
 	if err != nil {
 		username, err = cfg.GetData("username")
 		if err != nil {
-			return fmt.Errorf("Failed to get username: %v", err)
+			return fmt.Errorf("failed to get username: %v", err)
 		}
 	}
 
@@ -468,9 +468,9 @@ func runWithRuntime(r *rosa.Runtime, cmd *cobra.Command, argv []string) error {
 	})
 
 	if args.useAuthCode || args.useDeviceCode {
-		ssoURL, err := url.Parse(cfg.TokenURL)
+		ssoURL, err := urlHelper.Parse(cfg.TokenURL)
 		if err != nil {
-			return fmt.Errorf("can't parse token url '%s': %v", args.tokenURL, err)
+			return fmt.Errorf("can't parse token url '%s': %v", cfg.TokenURL, err)
 		}
 		ssoHost := ssoURL.Scheme + "://" + ssoURL.Hostname()
 
@@ -492,7 +492,7 @@ func reattemptLogin(cmd *cobra.Command, argv []string) {
 func tokenType(jwtToken *jwt.Token) (typ string, err error) {
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		err = fmt.Errorf("Expected map claims but got %T", claims)
+		err = fmt.Errorf("expected map claims but got %T", claims)
 		return
 	}
 	claim, ok := claims["typ"]
@@ -501,7 +501,7 @@ func tokenType(jwtToken *jwt.Token) (typ string, err error) {
 	}
 	value, ok := claim.(string)
 	if !ok {
-		err = fmt.Errorf("Expected string 'typ' but got %T", claim)
+		err = fmt.Errorf("expected string 'typ' but got %T", claim)
 		return
 	}
 	typ = value
@@ -528,13 +528,13 @@ func Call(cmd *cobra.Command, argv []string, reporter reporter.Logger) error {
 	isLoggedIn := false
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("Failed to load config file: %v", err)
+		return fmt.Errorf("failed to load config file: %v", err)
 	}
 	if cfg != nil && !config.IsNotValid(cfg) {
 		// Check that credentials in the config file are valid
 		isLoggedIn, err = cfg.Armed()
 		if err != nil {
-			return fmt.Errorf("Failed to determine if user is logged in: %v", err)
+			return fmt.Errorf("failed to determine if user is logged in: %v", err)
 		}
 	}
 
@@ -543,7 +543,7 @@ func Call(cmd *cobra.Command, argv []string, reporter reporter.Logger) error {
 		if err != nil {
 			username, err = cfg.GetData("username")
 			if err != nil {
-				return fmt.Errorf("Failed to get username: %v", err)
+				return fmt.Errorf("failed to get username: %v", err)
 			}
 		}
 

@@ -13,6 +13,8 @@ import (
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	asv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 )
 
 // PolicyDocument models an AWS IAM policy document
@@ -173,7 +175,7 @@ func (p *PolicyDocument) checkPermissionsUsingQueryClient(queryClient *awsClient
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(context.TODO())
 		if err != nil {
-			return false, fmt.Errorf("Error simulating policy: %v", err)
+			return false, fmt.Errorf("error simulating policy: %v", err)
 		}
 
 		for _, result := range output.EvaluationResults {
@@ -184,7 +186,7 @@ func (p *PolicyDocument) checkPermissionsUsingQueryClient(queryClient *awsClient
 	}
 
 	if len(failedActions) > 0 {
-		return false, fmt.Errorf("Actions not allowed with tested credentials: %v", failedActions)
+		return false, fmt.Errorf("actions not allowed with tested credentials: %v", failedActions)
 	}
 
 	return true, nil
@@ -257,11 +259,11 @@ func updateAssumeRolePolicyPrincipals(policy string, role *iamtypes.Role) (strin
 
 func InterpolatePolicyDocument(partition string, doc string, replacements map[string]string) string {
 	for key, val := range replacements {
-		doc = strings.Replace(doc, fmt.Sprintf("%%{%s}", key), val, -1)
+		doc = strings.ReplaceAll(doc, fmt.Sprintf("%%{%s}", key), val)
 	}
 
 	// TODO Remove once MCC policies are all updated
-	doc = strings.Replace(doc, "arn:aws:", fmt.Sprintf("arn:%s:", partition), -1)
+	doc = strings.ReplaceAll(doc, "arn:aws:", fmt.Sprintf("arn:%s:", partition))
 
 	return doc
 }
@@ -280,7 +282,7 @@ func getPolicyDocument(policyDocument *string) (*PolicyDocument, error) {
 
 func GenerateRolePolicyDoc(partition, oidcEndpointUrl,
 	accountID, serviceAccounts, policyDetails string) (string, error) {
-	oidcEndpointURL, err := url.ParseRequestURI(oidcEndpointUrl)
+	oidcEndpointURL, err := urlHelper.ParseRequestURI(oidcEndpointUrl)
 	if err != nil {
 		return "", err
 	}
