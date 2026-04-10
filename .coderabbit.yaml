@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+inheritance: true
+language: en-US
+
+reviews:
+  profile: chill
+  high_level_summary: true
+  collapse_walkthrough: true
+  changed_files_summary: false
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  poem: false
+  suggested_labels: false
+  path_filters:
+    - "!vendor/**"
+    - "!**/vendor/**"
+    - "!pkg/**/mocks/**"
+    - "!cmd/create/idp/mocks/**"
+    - "!assets/bindata.go"
+    - "!**/*.pb.go"
+    - "!**/*.pb.gw.go"
+    - "!**/testdata/**"
+  path_instructions:
+    - path: "cmd/**/*.go"
+      instructions: |
+        - Treat Cobra wiring, flags, command UX, and error handling as high-signal review areas.
+        - Flag changes that add commands or flags without matching updates to `cmd/rosa/structure_test/command_structure.yml` or the matching `command_args.yml`.
+        - Prefer thin command files and business logic in `pkg/`.
+    - path: "pkg/aws/**/*.go"
+      instructions: |
+        - Cross-check AWS behavior and user-facing wording against the official ROSA and AWS references called out in `AGENTS.md`.
+        - Flag hardcoded credentials, secret exposure, or assumptions about STS, IAM, OIDC, VPC, quotas, or regions that are not verified.
+    - path: "pkg/**/*.go"
+      instructions: |
+        - Review for test coverage impact, error wrapping, reporter consistency, and alignment with nearby package patterns.
+        - Flag direct edits to generated mocks or attempts to bypass existing helper flows.
+    - path: "**/*_test.go"
+      instructions: |
+        - Use Ginkgo v2 and Gomega conventions already present in the repo.
+        - Flag weak tests that only restate implementation or changes that weaken existing assertions.
+    - path: "**/*.md"
+      instructions: |
+        - Check commands, workflow steps, and product terminology against `AGENTS.md`, `CONTRIBUTE.md`, and official ROSA/AWS docs.
+        - Flag stale file paths, placeholder Jira links, or wording that conflicts with the real repository workflow.
+    - path: ".github/**/*"
+      instructions: |
+        - Keep issue and PR metadata aligned with repo-local agent guidance and contributor workflow.
+  tools:
+    golangci-lint:
+      enabled: true
+    gitleaks:
+      enabled: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - CONTRIBUTE.md
+      - .claude/SKILLS.md
+      - .claude/skills/**/SKILL.md
+  learnings:
+    scope: local

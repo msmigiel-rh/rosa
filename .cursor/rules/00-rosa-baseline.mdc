@@ -1,0 +1,18 @@
+---
+description: Core ROSA repo guidance for agents working in this repository.
+alwaysApply: true
+---
+
+# ROSA Baseline
+
+- Start with `AGENTS.md`. If there is a conflict, `AGENTS.md` and the exact file it references win.
+- Keep Cobra wiring in `cmd/` and business logic in `pkg/`.
+- Do not edit generated files directly:
+  - `assets/bindata.go`
+  - `pkg/*/mocks/`
+  - `cmd/create/idp/mocks/`
+  - `vendor/`
+- Do not weaken tests to make a change pass.
+- Do not do release work from this repository.
+- Use `CONTRIBUTE.md`, the git hooks, and `Makefile` targets for local workflow.
+- When commands or flags change, remember the structure-test files under `cmd/rosa/structure_test/`.

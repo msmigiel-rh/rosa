@@ -1,0 +1,93 @@
+name: Bug Report
+description: Report incorrect ROSA CLI behavior, crashes, or failed command workflows.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report bugs in the `rosa` CLI itself.
+
+        Please include enough detail to reproduce the problem and understand its impact. Use `N/A` when a section does not apply, and redact secrets or tokens from all pasted output.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm these before submitting.
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: I redacted secrets, tokens, and sensitive account details from logs and commands.
+          required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Cluster architecture
+      description: Which ROSA architecture is affected?
+      options:
+        - HCP
+        - classic
+        - both
+        - unknown
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Affected command or workflow
+      description: "Example: `rosa create cluster`, `rosa verify permissions`, or login / setup flow."
+      placeholder: rosa <command>
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the actual behavior, expected behavior, impact, and minimal reproduction steps.
+      value: |
+        ## Actual behavior
+
+        ## Expected behavior
+
+        ## Reproduction steps
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Environment and versions
+      description: Paste relevant version and environment details.
+      render: shell
+      value: |
+        rosa version
+        oc version
+        aws --version
+        uname -a
+    validations:
+      required: true
+  - type: textarea
+    id: aws_context
+    attributes:
+      label: AWS and cluster context
+      description: Include region, auth/profile mode, STS/IAM/OIDC context, quota or SCP constraints, and anything else needed to understand the environment. Redact sensitive values.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or debug output
+      description: Paste the most relevant `--debug` output, stack traces, or command output. Use a gist for very large logs.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Workarounds, related documentation, screenshots, or other context that may help triage.
+    validations:
+      required: false

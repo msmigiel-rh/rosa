@@ -1,0 +1,29 @@
+---
+name: ROSA AWS Context
+description: "Cross-check AWS-facing code and docs against official ROSA and AWS references before changing behavior."
+---
+
+# ROSA AWS Context
+
+Use this skill when:
+
+- Touching `pkg/aws/` or AWS-related command flows
+- Editing AWS setup, prerequisites, or troubleshooting docs
+- Changing wording around HCP, classic, STS, IAM, OIDC, VPC, subnet, quota, or region behavior
+
+## Workflow
+
+1. Read `AGENTS.md` and use its external ROSA and AWS references first.
+2. Determine whether the change is HCP-only, classic-only, or shared.
+3. Verify architecture claims against the ROSA architecture docs before changing code comments, help text, or docs.
+4. Verify prerequisite claims against the ROSA setup docs, especially quotas, support plans, SCP constraints, and STS token version notes.
+5. Verify AWS CLI install, profile, and config guidance against official AWS CLI documentation before editing examples.
+6. Prefer existing AWS helper functions and client wrappers over ad-hoc SDK usage.
+7. Do not hardcode credentials or add logging that exposes secret material.
+8. If code behavior and official docs appear to disagree, surface the mismatch explicitly instead of guessing.
+
+## Verification
+
+- Re-read the exact doc section that supports the changed behavior or wording.
+- Check user-facing examples for current commands and options.
+- Run the relevant local checks from `CONTRIBUTE.md` and `Makefile`.

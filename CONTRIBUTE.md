@@ -2,6 +2,14 @@
 Welcome, and thank you for considering to contribute to ROSA.
 Before you begin, or have more questions reach out to us on [Slack @rosa-cli](https://redhat.enterprise.slack.com/archives/CB53T9ZHQ)
 
+## AI-Assisted Contributions
+
+Repo-local agent guidance lives in [AGENTS.md](AGENTS.md).
+
+Tool-specific entrypoints such as [CLAUDE.md](CLAUDE.md) and [GEMINI.md](GEMINI.md) point back there so the repository only maintains one central guidance file for agents.
+
+`CONTRIBUTE.md` remains the authoritative source for contributor workflow, hooks, verification commands, commit format, and PR expectations.
+
 ## Contributing Code
 To contribute bug fixes or features to ROSA:
 
@@ -18,6 +26,7 @@ To ensure it is picked up by the ROSA team, please set `component = rosa` in the
 Be sure to practice good git commit hygiene as you make your changes. All but the smallest changes should be broken up
 into a few commits that tell a story. Use your git commits to provide context for the folks who will review PRs. We strive
 to follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#summary).
+In this repository, the conventional-commit type still lives inside the required `OCM-XXXXX | <type>: <message>` subject format described below.
 
 REQUIRED BEFORE YOUR FIRST COMMIT IN A CLONE:
 ```shell
