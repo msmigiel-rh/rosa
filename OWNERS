@@ -1,15 +1,10 @@
-reviewers:
-- olucasfreitas
-- jerichokeyne
-- yuwang-RH
 approvers:
-- gdbranco
-- robpblake
-- jerichokeyne
-- davidleerh
 - olucasfreitas
+- jerichokeyne
+- amandahla
 - BraeTroutman
 - marcolan018
-- yuwang-RH
-- amandahla
+- gdbranco
+- robpblake
+- davidleerh
 - red-hat-konflux[bot]
