@@ -16,8 +16,8 @@ Use this skill when:
 
 1. Read `AGENTS.md`, then inspect the nearest similar command implementation.
 2. Keep Cobra command files thin and move non-Cobra logic into `pkg/`.
-3. Use `Run: run` instead of `RunE: runE`.
-4. Do not call `os.Exit()` in commands.
+3. Follow the entrypoint and exit pattern already established in the nearest similar command area.
+4. Many ROSA commands use `Run: run`; do not switch a command area between `Run` and `RunE`, or add/remove direct `os.Exit()` calls, unless the surrounding pattern already does so and the change keeps behavior consistent.
 5. Reuse `output`, `reporter`, and `interactive` patterns already used by the surrounding command area.
 6. If the command tree changes, update `cmd/rosa/structure_test/command_structure.yml`.
 7. If supported flags change, update the matching `cmd/rosa/structure_test/command_args/**/command_args.yml`.

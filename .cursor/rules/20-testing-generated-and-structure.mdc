@@ -1,6 +1,10 @@
 ---
 description: Testing expectations, generated-file boundaries, and CLI structure contract.
-globs: "**/*_test.go"
+globs:
+  - "**/*_test.go"
+  - "cmd/**/*.go"
+  - "pkg/**/*.go"
+  - "**/*.md"
 alwaysApply: false
 ---
 

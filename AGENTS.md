@@ -59,9 +59,9 @@ Use this file as the starting point for repository context. When this file point
 - Keep Cobra-specific logic in `cmd/`; keep non-Cobra logic in `pkg/`.
 - Use existing package patterns before inventing new abstractions. The machinepool commands are a strong reference for newer command structure.
 - Prefer existing helpers and functions when they already fit the task.
-- Use `Run: run` instead of `RunE: runE` for commands so usage output is not printed on returned errors.
-- Do not call `os.Exit()` inside commands.
-- Keep error handling consistent with the surrounding package, especially reporter usage and wrapped error messages.
+- Follow the command entrypoint and exit pattern already established in the nearest comparable command area.
+- Many ROSA commands use `Run: run`; do not switch a command area between `Run` and `RunE`, or add/remove direct `os.Exit()` calls, unless the surrounding pattern already does so and the change keeps behavior consistent.
+- Keep error handling consistent with the surrounding package, especially reporter usage, exit behavior, and wrapped error messages.
 - Follow repo naming conventions, including the existing acronym style such as `variableNameEndingWithAcronymHcp`.
 - Keep variable names explicit and consistent with nearby code.
 - Respect generated-file boundaries. If a change requires regenerating mocks or assets, use the documented generator path instead of hand-editing output.

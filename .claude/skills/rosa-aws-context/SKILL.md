@@ -15,9 +15,9 @@ Use this skill when:
 
 1. Read `AGENTS.md` and use its external ROSA and AWS references first.
 2. Determine whether the change is HCP-only, classic-only, or shared.
-3. Verify architecture claims against the ROSA architecture docs before changing code comments, help text, or docs.
-4. Verify prerequisite claims against the ROSA setup docs, especially quotas, support plans, SCP constraints, and STS token version notes.
-5. Verify AWS CLI install, profile, and config guidance against official AWS CLI documentation before editing examples.
+3. Cross-check architecture claims against the ROSA architecture docs before changing code comments, help text, or docs.
+4. Confirm prerequisite claims against the ROSA setup docs, especially quotas, support plans, SCP constraints, and STS token version notes.
+5. Validate AWS CLI install, profile, and config guidance against official AWS CLI documentation before editing examples.
 6. Prefer existing AWS helper functions and client wrappers over ad-hoc SDK usage.
 7. Do not hardcode credentials or add logging that exposes secret material.
 8. If code behavior and official docs appear to disagree, surface the mismatch explicitly instead of guessing.
