@@ -14,5 +14,5 @@ alwaysApply: true
   - `vendor/`
 - Do not weaken tests to make a change pass.
 - Do not do release work from this repository.
-- Use `CONTRIBUTE.md`, the git hooks, and `Makefile` targets for local workflow.
+- Use `CONTRIBUTING.md`, the git hooks, `Makefile` targets, and the docs indexed from `AGENTS.md` for local workflow.
 - When commands or flags change, remember the structure-test files under `cmd/rosa/structure_test/`.

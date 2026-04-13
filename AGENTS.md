@@ -14,7 +14,7 @@ Use this file as the starting point for repository context. When this file point
 
 ## Key Reference Files
 
-- `CONTRIBUTE.md`
+- `CONTRIBUTING.md`
   - Contributor workflow, hook installation, required local checks, commit format, and CI expectations.
 - `Makefile`
   - Supported local build, test, format, and generation commands.
@@ -28,6 +28,17 @@ Use this file as the starting point for repository context. When this file point
   - CLI command tree contract.
 - `cmd/rosa/structure_test/command_args/**/command_args.yml`
   - Supported flag contract for each command.
+
+## Docs Index
+
+- `guidelines/ARCHITECTURE.md`
+  - High-level CLI layering, external-system boundaries, and change-risk hotspots.
+- `guidelines/aws-guidelines.md`
+  - AWS and ROSA architecture checks, prerequisite handling, secret safety, and dependency-bump guardrails.
+- `guidelines/command-guidelines.md`
+  - CLI command authoring expectations, structure-test alignment, and reporter/output patterns.
+- `guidelines/testing-guidelines.md`
+  - Test style, generated-file boundaries, validation paths, and PR-readiness checklist use.
 
 ## Codebase Map
 
@@ -90,6 +101,7 @@ When adding or changing a CLI command:
   - `make rosa`
   - `make generate`
   - `make generate-docs`
+- Use the developer checklist in `.github/pull_request_template.md` as the final PR-readiness pass for validation, manual testing, docs updates, and risk notes.
 - Add focused automated tests when behavior changes in a way that could regress.
 - Do not change tests to accommodate broken behavior. Tests should prove correctness, not hide regressions.
 - Use Ginkgo v2 and Gomega in the style already used by the surrounding package.
@@ -117,7 +129,8 @@ Cross-check the docs when the change involves:
 - AWS CLI installation, profiles, credentials, or config examples
 - User-facing setup or troubleshooting guidance
 
-Do not invent AWS or ROSA product behavior when the official docs already define it.
+- Do not invent AWS or ROSA product behavior when the official docs already define it.
+- Do not silently bump AWS SDK, OCM SDK, or related dependency versions. If a dependency bump is required, call it out explicitly, explain why, and validate downstream impact.
 
 ## Commit And PR Expectations
 
@@ -134,14 +147,28 @@ Do not invent AWS or ROSA product behavior when the official docs already define
 
 - `AGENTS.md`
   - Central repo-local guidance for agents in this repository.
+- `CONTRIBUTING.md`
+  - Canonical contributor workflow and validation reference for humans and agents.
 - `CLAUDE.md`
-  - Thin Claude-specific entrypoint that points back here.
+  - Thin Claude-specific entrypoint that imports this file.
 - `GEMINI.md`
   - Thin Gemini-specific entrypoint that points back here.
+- `guidelines/ARCHITECTURE.md`
+  - Repository architecture context that should stay stable across agent tools.
+- `guidelines/*-guidelines.md`
+  - Domain-specific guidance that `AGENTS.md` indexes instead of duplicating.
 - `.cursor/rules/`
   - Tool-specific reinforcement of the rules in this file.
 - `.claude/skills/`
   - Small ROSA-specific workflows that package repeatable tasks without replacing this file.
+
+## Human-In-The-Loop Triggers
+
+- A change wants to bump `aws-sdk-go-v2`, `ocm-sdk-go`, Cobra, Ginkgo, or otherwise requires `go mod tidy`, `go mod vendor`, or broad dependency rewrites.
+- A new feature or command flow appears to duplicate an existing ROSA workflow, Jira ticket, or merged PR and the intended scope is unclear.
+- The change touches login, authentication, token storage, keyrings, credentials, STS, IAM, OIDC, break-glass, or other security-sensitive paths.
+- The change alters command structure, flags, prompts, JSON output, or user-facing setup behavior in a way that may affect backward compatibility.
+- Generated files, structure tests, or broader test expectations change in ways that are larger than the task appears to justify.
 
 ## Safety Reminders
 

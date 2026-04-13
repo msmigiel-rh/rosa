@@ -11,7 +11,7 @@ Commit format requirement:
 [JIRA-TICKET] | [TYPE]: <MESSAGE>
 TYPE must be one of:
 feat, fix, docs, style, refactor, test, chore, build, ci, perf
-For contributor workflow, see: ./CONTRIBUTE.md
+For contributor workflow, see: ./CONTRIBUTING.md
 For repo-local agent guidance, see: ./AGENTS.md
 -->
 

@@ -5,6 +5,8 @@ description: "Choose the right local verification steps before claiming a ROSA c
 
 # ROSA Verification Gates
 
+Start with `AGENTS.md` and `guidelines/testing-guidelines.md`.
+
 Use this skill when:
 
 - Preparing to commit or open a PR
@@ -35,6 +37,7 @@ Use this skill when:
 
 - `make basic-checks`
 - `make pre-push-checks` before push when the change is ready
+- re-read `.github/pull_request_template.md` and use its developer checklist as the final PR-readiness pass
 
 ## Rules
 
@@ -43,3 +46,4 @@ Use this skill when:
 - Do not run `go mod tidy` or `go mod vendor` unless the task explicitly requires dependency-state changes.
 - If generated files changed unexpectedly, stop and confirm why before committing them.
 - If a command changed but the structure-test files did not, verify that omission intentionally.
+- If the PR template checklist expects docs, manual validation, or risk notes, make sure the final PR body actually covers them.

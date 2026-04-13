@@ -7,6 +7,7 @@ alwaysApply: false
 # Curated ROSA Adaptation Of 100 Go Mistakes
 
 This is a supplemental checklist. `AGENTS.md` and `10-go-cobra-cli.mdc` remain the primary ROSA guidance.
+It is intentionally shorter than broader Terraform-oriented variants: keep only the footguns that reinforce ROSA CLI patterns without duplicating the repo-specific command, AWS, and testing rules above.
 
 - Avoid variable shadowing, especially `err`, `ctx`, and AWS or OCM clients.
 - Do not define interfaces too early. Prefer consumer-side interfaces and return concrete types unless the codebase already establishes an interface boundary.

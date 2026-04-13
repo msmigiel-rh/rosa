@@ -40,7 +40,7 @@ reviews:
         - Flag weak tests that only restate implementation or changes that weaken existing assertions.
     - path: "**/*.md"
       instructions: |
-        - Check commands, workflow steps, and product terminology against `AGENTS.md`, `CONTRIBUTE.md`, and official ROSA/AWS docs.
+        - Check commands, workflow steps, and product terminology against `AGENTS.md`, `CONTRIBUTING.md`, `guidelines/ARCHITECTURE.md`, and official ROSA/AWS docs.
         - Flag stale file paths, placeholder Jira links, or wording that conflicts with the real repository workflow.
     - path: ".github/**/*"
       instructions: |
@@ -55,7 +55,9 @@ knowledge_base:
   code_guidelines:
     enabled: true
     filePatterns:
-      - CONTRIBUTE.md
+      - CONTRIBUTING.md
+      - guidelines/ARCHITECTURE.md
+      - guidelines/*-guidelines.md
       - .claude/SKILLS.md
       - .claude/skills/**/SKILL.md
   learnings:

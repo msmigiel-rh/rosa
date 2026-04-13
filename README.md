@@ -27,7 +27,14 @@ Formatting commands:
 - `make fmt-check` validates formatting without changing files
 - changed-files coverage checks use `github.com/vearutop/gocovdiff@v1.4.2` via `go run` and fetch it automatically when missing
 
-See `CONTRIBUTE.md` for the full contribution workflow and commit requirements.
+See `CONTRIBUTING.md` for the full contribution workflow and commit requirements.
+
+## Repository guidance
+
+- `AGENTS.md` is the central repo-local guidance for AI agents working in this repository.
+- `CONTRIBUTING.md` is the canonical contributor workflow for humans and agents.
+- `guidelines/ARCHITECTURE.md` captures stable architecture context for the CLI.
+- `guidelines/*-guidelines.md` contains deeper domain-specific guidance that `AGENTS.md` indexes.
 
 ## Build from source
 

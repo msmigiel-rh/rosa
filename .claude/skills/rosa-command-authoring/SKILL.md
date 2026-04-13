@@ -14,7 +14,7 @@ Use this skill when:
 
 ## Workflow
 
-1. Read `AGENTS.md`, then inspect the nearest similar command implementation.
+1. Read `AGENTS.md` and `guidelines/command-guidelines.md`, then inspect the nearest similar command implementation.
 2. Keep Cobra command files thin and move non-Cobra logic into `pkg/`.
 3. Follow the entrypoint and exit pattern already established in the nearest similar command area.
 4. Many ROSA commands use `Run: run`; do not switch a command area between `Run` and `RunE`, or add/remove direct `os.Exit()` calls, unless the surrounding pattern already does so and the change keeps behavior consistent.
@@ -30,4 +30,4 @@ Use this skill when:
 - `make rosa`
 - `make generate-docs` when command docs or help output changed
 
-Follow `CONTRIBUTE.md` for the exact contributor workflow and hook expectations.
+Follow `CONTRIBUTING.md` for the exact contributor workflow and hook expectations.
