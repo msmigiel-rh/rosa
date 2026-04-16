@@ -1,0 +1,81 @@
+name: Feature Request
+description: Propose a ROSA CLI enhancement or workflow improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for CLI enhancements, command UX improvements, or new ROSA workflows in `openshift/rosa`.
+
+        Please be specific about the user problem, current workaround, and how the proposed change should behave.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: I did not include secrets, tokens, or sensitive account details in this request.
+          required: true
+  - type: input
+    id: area
+    attributes:
+      label: Affected command or workflow area
+      description: "Example: `rosa create cluster`, IAM setup, login, machinepools, docs, or verification commands."
+      placeholder: rosa <command> or workflow area
+    validations:
+      required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Architecture relevance
+      description: Which ROSA architecture should this feature support?
+      options:
+        - HCP
+        - classic
+        - both
+        - unsure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the user problem, impact, and who is affected.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround
+      description: Describe what users do today instead, or say `N/A` if there is no workaround.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Desired behavior and acceptance criteria
+      description: Describe the proposed behavior, expected UX, and how maintainers can tell the feature is done.
+      value: |
+        ## Desired behavior
+
+        ## Acceptance criteria
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Related documentation or references
+      description: Link any ROSA, AWS, OCM, or OpenShift documentation that should guide the implementation.
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Include edge cases, compatibility concerns, migration notes, or follow-up ideas.
+    validations:
+      required: false

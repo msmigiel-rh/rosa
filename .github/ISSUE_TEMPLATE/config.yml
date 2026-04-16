@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ROSA documentation
+    url: https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/about/welcome-index
+    about: Review official ROSA product and CLI documentation before opening an issue.
+  - name: ROSA support
+    url: https://docs.aws.amazon.com/rosa/latest/userguide/rosa-support.html
+    about: Open AWS or Red Hat support cases for service-side or account-specific ROSA support needs.

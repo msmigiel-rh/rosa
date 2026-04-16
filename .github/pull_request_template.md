@@ -11,7 +11,8 @@ Commit format requirement:
 [JIRA-TICKET] | [TYPE]: <MESSAGE>
 TYPE must be one of:
 feat, fix, docs, style, refactor, test, chore, build, ci, perf
-For details, see: ./CONTRIBUTE.md
+For contributor workflow, see: ./CONTRIBUTING.md
+For repo-local agent guidance, see: ./AGENTS.md
 -->
 
 ## PR Summary
@@ -22,7 +23,7 @@ For details, see: ./CONTRIBUTE.md
 
 ## Related Issues and PRs
 <!-- Link all tracking items and related code changes -->
-- Jira: [OCM-XXXXX](https://jira.url/OCM-XXXXX)
+- Jira: [OCM-XXXXX](https://issues.redhat.com/browse/OCM-XXXXX)
 - Fixes: `#`
 - Related PR(s):
 - Related design/docs:
@@ -77,10 +78,11 @@ For details, see: ./CONTRIBUTE.md
 - [ ] Commit subject/title follows `[JIRA-TICKET] | [TYPE]: <MESSAGE>`.
 - [ ] PR description clearly explains both **what** changed and **why**.
 - [ ] Relevant Jira/GitHub issues and related PRs are linked.
+- [ ] `make install-hooks` has been run in this clone.
 - [ ] Tests were added/updated where appropriate.
 - [ ] I manually tested the change.
 - [ ] `make test` passes.
 - [ ] `make lint` passes.
 - [ ] `make rosa` passes.
-- [ ] Documentation was added/updated where appropriate.
+- [ ] Documentation or repo-local agent guidance was added/updated where appropriate.
 - [ ] Any risk, limitation, or follow-up work is documented.

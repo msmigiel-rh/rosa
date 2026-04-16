@@ -64,7 +64,7 @@ var _ = Describe("Create Machine Pool", func() {
   * The commit and PR should follow
     * Only one commit is allowed per PR, if multiple commits created please squash them with command
     `git rebase -i HEAD~N`(_N_ is the commits number you would squashed)
-    * The commit and PR title should follow rule of [contributing-to-rosa](../CONTRIBUTE.md#contributing-code)
+    * The commit and PR title should follow rule of [contributing-to-rosa](../CONTRIBUTING.md#contributing-code)
     * Case id must be included in the PR/commit title if new automated or updated. Comma-separated if multiple included in same PR/commit. For example
     `<card id> | test: automated cases id:123456,123457`
 
