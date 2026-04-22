@@ -73,60 +73,167 @@ var _ = Describe("Machinepool and nodepool", func() {
 			testCommand.Flags().Lookup("min-replicas").Changed = true
 			testCommand.Flags().Lookup("max-replicas").Changed = true
 		})
-		It("editAutoscaling should not be nil if nothing is changed", func() {
+		It("editAutoscaling should return nil if nothing is changed", func() {
 			nodepool, err := cmv1.NewNodePool().
 				Autoscaling(cmv1.NewNodePoolAutoscaling().MaxReplica(2).MinReplica(1)).
 				Build()
 			Expect(err).ToNot(HaveOccurred())
-			builder := editAutoscaling(nodepool, 1, 2)
-			Expect(builder).To(Not(BeNil()))
+			builder := editAutoscaling(nodepool, 1, 2, true, true)
+			Expect(builder).To(BeNil())
 		})
 		It("editAutoscaling should equal the expected output", func() {
 			nodepool, err := cmv1.NewNodePool().
 				Autoscaling(cmv1.NewNodePoolAutoscaling().MaxReplica(2).MinReplica(1)).
 				Build()
 			Expect(err).ToNot(HaveOccurred())
-			builder := editAutoscaling(nodepool, 2, 3)
+			builder := editAutoscaling(nodepool, 2, 3, true, true)
 			asBuilder := cmv1.NewNodePoolAutoscaling().MaxReplica(3).MinReplica(2)
 			Expect(builder).To(Equal(asBuilder))
 		})
-		It("editAutoscaling should equal the expected output with no min replica value", func() {
+		It("editAutoscaling should equal the expected output with no min replica flag set", func() {
 			nodepool, err := cmv1.NewNodePool().
 				Autoscaling(cmv1.NewNodePoolAutoscaling().MaxReplica(2).MinReplica(1)).
 				Build()
 			Expect(err).ToNot(HaveOccurred())
-			builder := editAutoscaling(nodepool, 0, 3)
+			// Only max flag set, min flag not set (so min value ignored)
+			builder := editAutoscaling(nodepool, 0, 3, false, true)
 			asBuilder := cmv1.NewNodePoolAutoscaling().MaxReplica(3).MinReplica(1)
 			Expect(builder).To(Equal(asBuilder))
 		})
-		It("editAutoscaling should equal the expected output with no max replica value", func() {
+		It("editAutoscaling should equal the expected output with no max replica flag set", func() {
 			nodepool, err := cmv1.NewNodePool().
 				Autoscaling(cmv1.NewNodePoolAutoscaling().MaxReplica(4).MinReplica(1)).
 				Build()
 			Expect(err).ToNot(HaveOccurred())
-			builder := editAutoscaling(nodepool, 2, 0)
+			// Only min flag set, max flag not set (so max value ignored)
+			builder := editAutoscaling(nodepool, 2, 0, true, false)
 			asBuilder := cmv1.NewNodePoolAutoscaling().MaxReplica(4).MinReplica(2)
 			Expect(builder).To(Equal(asBuilder))
 		})
+		It("editAutoscaling should support min=0 with autoscaling (OCM-21663)", func() {
+			nodepool, err := cmv1.NewNodePool().
+				Autoscaling(cmv1.NewNodePoolAutoscaling().MaxReplica(2).MinReplica(1)).
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			// User sets min=0, max=2 (both flags set)
+			builder := editAutoscaling(nodepool, 0, 2, true, true)
+			asBuilder := cmv1.NewNodePoolAutoscaling().MaxReplica(2).MinReplica(0)
+			Expect(builder).To(Equal(asBuilder))
+		})
+		It("fillAutoScalingAndReplicas should enable autoscaling with min=0 on replicas-only nodepool", func() {
+			// Regression test: nodepool has replicas=2, no autoscaling
+			// User enables autoscaling with min=0, max=2
+			nodepool, err := cmv1.NewNodePool().
+				Replicas(2).
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nodepool.Autoscaling()).To(BeNil())
+
+			npBuilder := cmv1.NewNodePool()
+			fillAutoScalingAndReplicas(npBuilder, true, nodepool, 0, 2, 0, true, true)
+
+			patch, err := npBuilder.Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(patch.Autoscaling()).ToNot(BeNil())
+			Expect(patch.Autoscaling().MinReplica()).To(Equal(0))
+			Expect(patch.Autoscaling().MaxReplica()).To(Equal(2))
+		})
 		It("Test edit nodepool min-replicas = 0 when autoscaling is set - should succeed", func() {
-			err := validateNodePoolEdit(testCommand, true, 0, 0, 1)
+			nodepool, _ := cmv1.NewNodePool().Build()
+			err := validateNodePoolEdit(testCommand, true, 0, 0, 1, nodepool, true, true)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("Test edit nodepool min-replicas < 0 when autoscaling is set - should fail", func() {
-			err := validateNodePoolEdit(testCommand, true, 0, -1, 1)
+			nodepool, _ := cmv1.NewNodePool().Build()
+			err := validateNodePoolEdit(testCommand, true, 0, -1, 1, nodepool, true, false)
 			Expect(err.Error()).To(Equal("min-replicas must be a non-negative number when autoscaling is set"))
 		})
 		It("Test edit nodepool !autoscaling and replicas < 0 for nodepools", func() {
-			err := validateNodePoolEdit(testCommand, false, -1, 0, 0)
+			nodepool, _ := cmv1.NewNodePool().Build()
+			err := validateNodePoolEdit(testCommand, false, -1, 0, 0, nodepool, false, false)
 			Expect(err.Error()).To(Equal("the number of machine pool replicas needs to be a non-negative integer"))
 		})
-		It("Test edit nodepool autoscaling and minReplicas > maxReplicas", func() {
-			err := validateNodePoolEdit(testCommand, true, 0, 5, 1)
-			Expect(err.Error()).To(Equal("the number of machine pool min-replicas needs to be less " +
-				"than the number of machine pool max-replicas"))
+		It("Test edit nodepool autoscaling and minReplicas > maxReplicas (both flags set)", func() {
+			nodepool, _ := cmv1.NewNodePool().Build()
+			err := validateNodePoolEdit(testCommand, true, 0, 5, 1, nodepool, true, true)
+			Expect(err.Error()).To(Equal("the number of machine pool min-replicas must not be greater than max-replicas"))
+		})
+		It("Test edit nodepool autoscaling and minReplicas > maxReplicas (only min flag set)", func() {
+			// Existing: min=1, max=3; User sets: --min-replicas=5
+			// Final: min=5, max=3 (invalid)
+			nodepool, _ := cmv1.NewNodePool().
+				Autoscaling(cmv1.NewNodePoolAutoscaling().MinReplica(1).MaxReplica(3)).
+				Build()
+			err := validateNodePoolEdit(testCommand, true, 0, 5, 3, nodepool, true, false)
+			Expect(err.Error()).To(Equal("the number of machine pool min-replicas must not be greater than max-replicas"))
 		})
 		It("Test edit nodepool autoscaling and maxReplicas < 1", func() {
-			err := validateNodePoolEdit(testCommand, true, 0, 1, 0)
+			nodepool, _ := cmv1.NewNodePool().Build()
+			err := validateNodePoolEdit(testCommand, true, 0, 1, 0, nodepool, false, true)
+			Expect(err.Error()).To(Equal("max-replicas must be greater than zero"))
+		})
+		It("editAutoscaling should handle nil autoscaling when converting from fixed replicas", func() {
+			// Nodepool has fixed replicas=2, no autoscaling
+			nodepool, err := cmv1.NewNodePool().
+				Replicas(2).
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nodepool.Autoscaling()).To(BeNil())
+
+			// User enables autoscaling with min=0, max=2
+			builder := editAutoscaling(nodepool, 0, 2, true, true)
+			Expect(builder).ToNot(BeNil())
+
+			asBuilder := cmv1.NewNodePoolAutoscaling().MinReplica(0).MaxReplica(2)
+			Expect(builder).To(Equal(asBuilder))
+		})
+
+		It("editAutoscaling should default max to replicas when only min is set", func() {
+			// Nodepool has fixed replicas=3, no autoscaling
+			nodepool, err := cmv1.NewNodePool().
+				Replicas(3).
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nodepool.Autoscaling()).To(BeNil())
+
+			// User enables autoscaling with only min=0 (max not set, so maxReplicas=0)
+			builder := editAutoscaling(nodepool, 0, 0, true, false)
+			Expect(builder).ToNot(BeNil())
+
+			// Expect min=0 (from user) and max=3 (defaulted from replicas)
+			asBuilder := cmv1.NewNodePoolAutoscaling().MinReplica(0).MaxReplica(3)
+			Expect(builder).To(Equal(asBuilder))
+		})
+
+		It("editAutoscaling should default min to replicas when only max is set", func() {
+			// Nodepool has fixed replicas=2, no autoscaling
+			nodepool, err := cmv1.NewNodePool().
+				Replicas(2).
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nodepool.Autoscaling()).To(BeNil())
+
+			// User enables autoscaling with only max=5 (min not set, so minReplicas=0)
+			builder := editAutoscaling(nodepool, 0, 5, false, true)
+			Expect(builder).ToNot(BeNil())
+
+			// Expect min=2 (defaulted from replicas) and max=5 (from user)
+			asBuilder := cmv1.NewNodePoolAutoscaling().MinReplica(2).MaxReplica(5)
+			Expect(builder).To(Equal(asBuilder))
+		})
+
+		It("validateNodePoolEdit should reject enabling autoscaling on replicas=0 nodepool with omitted max", func() {
+			// Nodepool has fixed replicas=0, no autoscaling
+			nodepool, err := cmv1.NewNodePool().
+				Replicas(0).
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nodepool.Autoscaling()).To(BeNil())
+
+			// User enables autoscaling with only min=0 (max omitted, so maxReplicas=0 defaulted)
+			// This should fail validation because finalMax=0 after defaulting from replicas
+			err = validateNodePoolEdit(testCommand, true, 0, 0, 0, nodepool, true, false)
+			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("max-replicas must be greater than zero"))
 		})
 
@@ -261,7 +368,7 @@ var _ = Describe("Machinepool and nodepool", func() {
 			Expect(err).ToNot(HaveOccurred())
 			It("Autoscaling set", func() {
 				npBuilder = cmv1.NewNodePool()
-				fillAutoScalingAndReplicas(npBuilder, true, existingNodepool, 1, 3, 2)
+				fillAutoScalingAndReplicas(npBuilder, true, existingNodepool, 1, 3, 2, true, true)
 				npPatch, err := npBuilder.Build()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(npPatch.Autoscaling()).ToNot(BeNil())
@@ -270,7 +377,7 @@ var _ = Describe("Machinepool and nodepool", func() {
 			})
 			It("Replicas set", func() {
 				npBuilder = cmv1.NewNodePool()
-				fillAutoScalingAndReplicas(npBuilder, false, existingNodepool, 0, 0, 2)
+				fillAutoScalingAndReplicas(npBuilder, false, existingNodepool, 0, 0, 2, false, false)
 				npPatch, err := npBuilder.Build()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(npPatch.Autoscaling()).To(BeNil())

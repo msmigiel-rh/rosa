@@ -515,6 +515,18 @@ var _ = Describe("Machine pool min/max replicas validation", func() {
 			true,
 			false,
 		),
+		Entry("Max = 0 -> NOT OK",
+			0,
+			0,
+			false,
+			true,
+		),
+		Entry("Max < 0 -> NOT OK",
+			1,
+			-1,
+			false,
+			true,
+		),
 	)
 
 	DescribeTable("NodePool (HCP) min replicas validation",

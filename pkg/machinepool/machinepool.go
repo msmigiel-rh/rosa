@@ -1507,9 +1507,9 @@ func (m *machinePool) EditMachinePool(cmd *cobra.Command, machinePoolId string, 
 
 // fillAutoScalingAndReplicas is filling either autoscaling or replicas value in the builder
 func fillAutoScalingAndReplicas(npBuilder *cmv1.NodePoolBuilder, autoscaling bool, existingNodepool *cmv1.NodePool,
-	minReplicas int, maxReplicas int, replicas int) {
+	minReplicas int, maxReplicas int, replicas int, isMinReplicasSet bool, isMaxReplicasSet bool) {
 	if autoscaling {
-		npBuilder.Autoscaling(editAutoscaling(existingNodepool, minReplicas, maxReplicas))
+		npBuilder.Autoscaling(editAutoscaling(existingNodepool, minReplicas, maxReplicas, isMinReplicasSet, isMaxReplicasSet))
 	} else {
 		npBuilder.Replicas(replicas)
 	}
@@ -1818,7 +1818,8 @@ func editNodePool(cmd *cobra.Command, nodePoolID string,
 		return fmt.Errorf("failed to get autoscaling or replicas: '%s'", err)
 	}
 
-	err = validateNodePoolEdit(cmd, autoscaling, replicas, minReplicas, maxReplicas)
+	err = validateNodePoolEdit(cmd, autoscaling, replicas, minReplicas, maxReplicas, nodePool,
+		isMinReplicasSet, isMaxReplicasSet)
 	if err != nil {
 		return err
 	}
@@ -1842,7 +1843,8 @@ func editNodePool(cmd *cobra.Command, nodePoolID string,
 		npBuilder = npBuilder.Taints(taintBuilders...)
 	}
 
-	fillAutoScalingAndReplicas(npBuilder, autoscaling, nodePool, minReplicas, maxReplicas, replicas)
+	fillAutoScalingAndReplicas(npBuilder, autoscaling, nodePool, minReplicas, maxReplicas, replicas,
+		isMinReplicasSet, isMaxReplicasSet)
 
 	if isAutorepairSet || interactive.Enabled() {
 		autorepair, err := strconv.ParseBool(cmd.Flags().Lookup("autorepair").Value.String())
@@ -2105,7 +2107,8 @@ func editNodePool(cmd *cobra.Command, nodePoolID string,
 	return nil
 }
 
-func validateNodePoolEdit(cmd *cobra.Command, autoscaling bool, replicas int, minReplicas int, maxReplicas int) error {
+func validateNodePoolEdit(cmd *cobra.Command, autoscaling bool, replicas int, minReplicas int, maxReplicas int,
+	nodePool *cmv1.NodePool, isMinReplicasSet bool, isMaxReplicasSet bool) error {
 	if !autoscaling && replicas < 0 {
 		return fmt.Errorf("the number of machine pool replicas needs to be a non-negative integer")
 	}
@@ -2118,10 +2121,29 @@ func validateNodePoolEdit(cmd *cobra.Command, autoscaling bool, replicas int, mi
 		return fmt.Errorf("max-replicas must be greater than zero")
 	}
 
-	if autoscaling && cmd.Flags().Changed("max-replicas") && cmd.Flags().Changed(
-		"min-replicas") && minReplicas > maxReplicas {
-		return fmt.Errorf("the number of machine pool min-replicas needs to be less than the number of " +
-			"machine pool max-replicas")
+	// Validate the final computed min/max range after merging with existing values
+	// This catches cases where only one bound is changed, producing invalid range
+	if autoscaling && (isMinReplicasSet || isMaxReplicasSet || interactive.Enabled()) {
+		finalMin := minReplicas
+		finalMax := maxReplicas
+
+		// Get existing values if only one bound is being changed
+		if nodePool.Autoscaling() != nil {
+			if !isMinReplicasSet && !interactive.Enabled() {
+				finalMin = nodePool.Autoscaling().MinReplica()
+			}
+			if !isMaxReplicasSet && !interactive.Enabled() {
+				finalMax = nodePool.Autoscaling().MaxReplica()
+			}
+		}
+
+		if finalMax < 1 {
+			return fmt.Errorf("max-replicas must be greater than zero")
+		}
+
+		if finalMin > finalMax {
+			return fmt.Errorf("the number of machine pool min-replicas must not be greater than max-replicas")
+		}
 	}
 	return nil
 }
@@ -2219,12 +2241,19 @@ func getNodePoolReplicas(cmd *cobra.Command,
 	}
 
 	if autoscaling {
+		defaultMin := existingReplicas
+		defaultMax := existingReplicas
+		if existingAutoscaling != nil {
+			defaultMin = existingAutoscaling.MinReplica()
+			defaultMax = existingAutoscaling.MaxReplica()
+		}
+
 		// Prompt for min replicas if neither min or max is set or interactive mode
 		if !isMinReplicasSet && (interactive.Enabled() || !isMaxReplicasSet && !isAnyAdditionalParameterSet) {
 			minReplicas, err = interactive.GetInt(interactive.Input{
 				Question: "Min replicas",
 				Help:     cmd.Flags().Lookup("min-replicas").Usage,
-				Default:  existingAutoscaling.MinReplica(),
+				Default:  defaultMin,
 				Required: replicasRequired,
 				Validators: []interactive.Validator{
 					replicaSizeValidation.MinReplicaValidator(),
@@ -2242,7 +2271,7 @@ func getNodePoolReplicas(cmd *cobra.Command,
 			maxReplicas, err = interactive.GetInt(interactive.Input{
 				Question: "Max replicas",
 				Help:     cmd.Flags().Lookup("max-replicas").Usage,
-				Default:  existingAutoscaling.MaxReplica(),
+				Default:  defaultMax,
 				Required: replicasRequired,
 				Validators: []interactive.Validator{
 					replicaSizeValidation.MaxReplicaValidator(),
@@ -2251,6 +2280,15 @@ func getNodePoolReplicas(cmd *cobra.Command,
 			if err != nil {
 				err = fmt.Errorf("expected a valid number of max replicas: %s", err)
 				return
+			}
+		}
+
+		if existingAutoscaling == nil && !interactive.Enabled() {
+			if !isMinReplicasSet && minReplicas == 0 {
+				minReplicas = existingReplicas
+			}
+			if !isMaxReplicasSet && maxReplicas == 0 {
+				maxReplicas = existingReplicas
 			}
 		}
 	} else if interactive.Enabled() || !isReplicasSet {
@@ -2282,21 +2320,31 @@ func getNodePoolReplicas(cmd *cobra.Command,
 	return
 }
 
-func editAutoscaling(nodePool *cmv1.NodePool, minReplicas int, maxReplicas int) *cmv1.NodePoolAutoscalingBuilder {
-	existingMinReplica := nodePool.Autoscaling().MinReplica()
-	existingMaxReplica := nodePool.Autoscaling().MaxReplica()
+func editAutoscaling(nodePool *cmv1.NodePool, minReplicas int, maxReplicas int,
+	isMinReplicasSet bool, isMaxReplicasSet bool) *cmv1.NodePoolAutoscalingBuilder {
+	// Get existing values if autoscaling is already enabled
+	min := 0
+	max := 0
+	if nodePool.Autoscaling() != nil {
+		min = nodePool.Autoscaling().MinReplica()
+		max = nodePool.Autoscaling().MaxReplica()
+	} else if nodePool.Replicas() > 0 {
+		min = nodePool.Replicas()
+		max = nodePool.Replicas()
+	}
 
-	min := existingMinReplica
-	max := existingMaxReplica
-
-	if minReplicas != 0 {
+	// Update values if flag was set or in interactive mode
+	if (isMinReplicasSet || interactive.Enabled()) && minReplicas >= 0 {
 		min = minReplicas
 	}
-	if maxReplicas != 0 {
+	if (isMaxReplicasSet || interactive.Enabled()) && maxReplicas >= 1 {
 		max = maxReplicas
 	}
 
-	if min >= 1 && max >= 1 {
+	// Return builder if enabling autoscaling or changing values
+	if nodePool.Autoscaling() == nil ||
+		min != nodePool.Autoscaling().MinReplica() ||
+		max != nodePool.Autoscaling().MaxReplica() {
 		return cmv1.NewNodePoolAutoscaling().MinReplica(min).MaxReplica(max)
 	}
 

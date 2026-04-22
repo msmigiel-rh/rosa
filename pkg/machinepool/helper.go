@@ -246,6 +246,9 @@ func (r *ReplicaSizeValidation) MaxReplicaValidator() interactive.Validator {
 		if err != nil {
 			return err
 		}
+		if maxReplicas <= 0 {
+			return fmt.Errorf("max-replicas must be greater than zero")
+		}
 		if r.MinReplicas > maxReplicas {
 			return fmt.Errorf("max-replicas must be greater or equal to min-replicas")
 		}
