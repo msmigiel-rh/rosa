@@ -7,6 +7,7 @@ ENV PATH="/go/bin:${PATH}"
 ENV GOFLAGS=-buildvcs=false
 RUN mkdir -p /go/bin
 COPY . .
+RUN git config --global --add safe.directory /rosa
 RUN go install ./cmd/rosa
 RUN go test -c -o /go/bin/rosatest ./tests/e2e
 RUN rosa verify openshift-client
