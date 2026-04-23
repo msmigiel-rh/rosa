@@ -1,7 +1,13 @@
 # The image is for Prow CI steps to manage the ROSA cluster lifecycle and testing
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.25-openshift-4.22 as builder
-WORKDIR /go/src/github.com/openshift/rosa
+FROM registry.access.redhat.com/ubi9/go-toolset:1.25.8 as builder
+WORKDIR /rosa
+USER root
+ENV GOBIN=/go/bin
+ENV PATH="/go/bin:${PATH}"
+ENV GOFLAGS=-buildvcs=false
+RUN mkdir -p /go/bin
 COPY . .
+RUN git config --global --add safe.directory /rosa
 RUN go install ./cmd/rosa
 RUN go test -c -o /go/bin/rosatest ./tests/e2e
 RUN rosa verify openshift-client
@@ -13,12 +19,14 @@ RUN go install github.com/openshift-online/rosa-support@latest
 
 FROM registry.ci.openshift.org/ci/cli-ocm:latest as ocmcli
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.25-openshift-4.22
+FROM registry.access.redhat.com/ubi9/go-toolset:1.25.8
+USER root
 COPY --from=builder /go/bin/rosa* /usr/bin
-COPY --from=builder /go/src/github.com/openshift/rosa/tests/ci/data /rosa/tests/ci/data
-COPY --from=builder /go/src/github.com/openshift/rosa/tests/prow_ci.sh /rosa/tests/
+COPY --from=builder /rosa/tests/ci/data /rosa/tests/ci/data
+COPY --from=builder /rosa/tests/prow_ci.sh /rosa/tests/
 COPY --from=ocmcli /usr/bin/ocm /usr/bin/ocm
 COPY --from=rosa-support /opt/app-root/src/go/bin/rosa-support /usr/bin
+RUN mkdir -p /rosa/tests /tests/output && ln -s /tests/output /rosa/tests/output
 RUN yum -y install --setopt=skip_missing_names_on_install=False \
     jq \
     unzip && yum clean all
@@ -28,4 +36,9 @@ RUN curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscl
     rm -rf awscliv2.zip aws &&\
     aws --version
 RUN rosa verify openshift-client
+RUN groupadd --system appuser && \
+    useradd --system --gid appuser --home-dir /rosa --shell /bin/bash appuser && \
+    chown -R appuser:appuser /rosa /usr/local/aws-cli && \
+    chown appuser:appuser /usr/bin/rosa /usr/bin/rosatest /usr/bin/ocm /usr/bin/rosa-support /usr/local/bin/aws
 WORKDIR /rosa
+USER appuser
