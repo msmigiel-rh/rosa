@@ -14,11 +14,14 @@ import (
 	r53 "github.com/aws/aws-sdk-go-v2/service/route53"
 	r53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/openshift-online/ocm-common/pkg/aws/aws_client"
+	awserrors "github.com/openshift-online/ocm-common/pkg/aws/errors"
 	"github.com/openshift-online/ocm-common/pkg/test/kms_key"
 	"github.com/openshift-online/ocm-common/pkg/test/vpc_client"
 
 	"github.com/openshift/rosa/tests/utils/log"
 )
+
+const hcpInternalHostedZoneSuffix = "hypershift.local"
 
 func (rh *resourcesHandler) DeleteVPCChain(withSharedAccount bool) error {
 	var err error
@@ -394,13 +397,16 @@ func (rh *resourcesHandler) CleanupProxyResources(instID string, sharedVPC bool)
 	}
 	log.Logger.Infof("Instance %s is terminated", instID)
 
-	// Delete secrity group
 	_, err = awsClient.DeleteSecurityGroup(SGID)
-	if err != nil {
+	if err != nil && !isAWSAuthorizationError(err) {
 		log.Logger.Errorf("Delete security group failed: %s", err)
 		return err
 	}
-	log.Logger.Infof("Deleted security group: %s", SGID)
+	if err != nil {
+		log.Logger.Warnf("Security group %s deletion skipped (auth error, will be cleaned with VPC): %s", SGID, err)
+	} else {
+		log.Logger.Infof("Deleted security group: %s", SGID)
+	}
 
 	// Delete key pair
 	_, err = awsClient.DeleteKeyPair(keyName)
@@ -411,4 +417,22 @@ func (rh *resourcesHandler) CleanupProxyResources(instID string, sharedVPC bool)
 	log.Logger.Infof("Deleted key pair: %s", keyName)
 
 	return nil
+}
+
+// isAWSAuthorizationError returns true when the error represents an AWS
+// authorization failure that should be treated as non-fatal during teardown.
+// It uses smithy.APIError (via ocm-common) to match on the AWS error code
+// rather than brittle substring matching.
+func isAWSAuthorizationError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return awserrors.IsErrorCode(err, awserrors.UnauthorizedOperation) ||
+		awserrors.IsAccessDeniedException(err)
+}
+
+// hostedZoneIsHCPInternal returns true when the zone name represents an HCP
+// internal communication zone (suffix: hypershift.local) vs an ingress zone.
+func hostedZoneIsHCPInternal(hostedZoneName string) bool {
+	return strings.HasSuffix(hostedZoneName, hcpInternalHostedZoneSuffix)
 }
