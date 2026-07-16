@@ -223,7 +223,7 @@ func GetIdpUserNameFromPrompt(cmd *cobra.Command, r *rosa.Runtime,
 func GetIdpPasswordFromPrompt(cmd *cobra.Command, r *rosa.Runtime,
 	passwordKey, defaultPassword string) string {
 	password, err := interactive.GetPassword(interactive.Input{
-		Question: "Password",
+		Question: "Password (will not be shown after entry)",
 		Help:     cmd.Flags().Lookup(passwordKey).Usage,
 		Default:  defaultPassword,
 		Required: true,

@@ -822,7 +822,8 @@ func initFlags(cmd *cobra.Command) {
 		"",
 		`The password must
 		- Be at least 14 characters (ASCII-standard) without whitespaces
-		- Include uppercase letters, lowercase letters, and numbers or symbols (ASCII-standard characters only)`,
+		- Include uppercase letters, lowercase letters, and numbers or symbols (ASCII-standard characters only)
+		For security reasons, password will not be displayed`,
 	)
 	flags.MarkHidden("cluster-admin-user")
 
@@ -1231,7 +1232,9 @@ func run(cmd *cobra.Command, _ []string) {
 			}
 		}
 	}
-	outputClusterAdminDetails(r, isClusterAdmin, clusterAdminUser, clusterAdminPassword)
+
+	outputClusterAdminDetails(r, isClusterAdmin, clusterAdminUser, clusterAdminPassword,
+		strings.Trim(args.clusterAdminPassword, " \t") != "")
 
 	if isHostedCP && cmd.Flags().Changed(arguments.NewDefaultMPLabelsFlag) {
 		r.Reporter.Errorf("Setting the worker machine pool labels is not supported for hosted clusters")
@@ -4138,6 +4141,7 @@ func parseRFC3339(s string) (time.Time, error) {
 }
 
 const hostedCPFlag = "--hosted-cp"
+const clusterAdminPasswordPlaceholder = "<redacted>"
 
 func buildCommand(spec ocm.Spec, operatorRolesPrefix string,
 	operatorRolePath string, userSelectedAvailabilityZones bool, labels string,
@@ -4161,7 +4165,7 @@ func buildCommand(spec ocm.Spec, operatorRolesPrefix string,
 		argAdded := false
 		// Checks if admin password is from user (both flag and interactive)
 		if args.clusterAdminPassword != "" && spec.ClusterAdminPassword != "" {
-			command += fmt.Sprintf(" --cluster-admin-password %s", spec.ClusterAdminPassword)
+			command += fmt.Sprintf(" --cluster-admin-password %q", clusterAdminPasswordPlaceholder)
 			argAdded = true
 		}
 		if spec.ClusterAdminUser != admin.ClusterAdminUsername {
@@ -4507,10 +4511,14 @@ func getInitialValidSubnets(awsClient aws.Client, ids []string, r reporter.Logge
 	return initialValidSubnets, nil
 }
 
-func outputClusterAdminDetails(r *rosa.Runtime, isClusterAdmin bool, createAdminUser, createAdminPassword string) {
+func outputClusterAdminDetails(r *rosa.Runtime, isClusterAdmin bool, createAdminUser, createAdminPassword string,
+	customAdminPassword bool) {
 	if isClusterAdmin {
 		r.Reporter.Infof("cluster admin user is %s", createAdminUser)
-		r.Reporter.Infof("cluster admin password is %s", createAdminPassword)
+		if !customAdminPassword {
+			// If the admin password was generated, it needs to be displayed so the user can save it
+			r.Reporter.Infof("cluster admin password is %s", createAdminPassword)
+		}
 	}
 }
 

@@ -17,6 +17,7 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift/rosa/cmd/create/admin"
 	mock "github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/aws/tags"
 	"github.com/openshift/rosa/pkg/logging"
@@ -42,6 +43,7 @@ var _ = Describe("Validate build command", func() {
 		userSelectedAvailabilityZones = false
 		defaultMachinePoolLabels = "machine-pool-label"
 	})
+
 	Context("build command", func() {
 		When("domain prefix is present", func() {
 			It("prints --domain-prefix", func() {
@@ -209,7 +211,52 @@ var _ = Describe("Validate build command", func() {
 				Expect(command).To(ContainSubstring("--enable-delete-protection"))
 			})
 		})
+
+		When("--cluster-admin-password is provided by the user", func() {
+			It("prints --cluster-admin-password with a redacted placeholder", func() {
+				clusterConfig.ClusterAdminUser = admin.ClusterAdminUsername
+				clusterConfig.ClusterAdminPassword = "MySecretPass123!"
+				args.clusterAdminPassword = "MySecretPass123!"
+				defer func() { args.clusterAdminPassword = "" }()
+				command := buildCommand(clusterConfig, operatorRolesPrefix,
+					expectedOperatorRolePath, userSelectedAvailabilityZones,
+					defaultMachinePoolLabels, argsDotProperties)
+				Expect(command).To(ContainSubstring(
+					"--cluster-admin-password \"<redacted>\""))
+				Expect(command).NotTo(ContainSubstring("MySecretPass123!"))
+			})
+		})
+
+		When("cluster admin is created without a user-provided password", func() {
+			It("prints --create-admin-user", func() {
+				clusterConfig.ClusterAdminUser = admin.ClusterAdminUsername
+				clusterConfig.ClusterAdminPassword = "GeneratedPass456!"
+				command := buildCommand(clusterConfig, operatorRolesPrefix,
+					expectedOperatorRolePath, userSelectedAvailabilityZones,
+					defaultMachinePoolLabels, argsDotProperties)
+				Expect(command).To(ContainSubstring("--create-admin-user"))
+				Expect(command).NotTo(ContainSubstring("--cluster-admin-password"))
+				Expect(command).NotTo(ContainSubstring("GeneratedPass456!"))
+			})
+		})
+
+		When("custom admin user and password are provided", func() {
+			It("prints both --cluster-admin-password redacted and --cluster-admin-user", func() {
+				clusterConfig.ClusterAdminUser = "my-admin"
+				clusterConfig.ClusterAdminPassword = "CustomPass789!"
+				args.clusterAdminPassword = "CustomPass789!"
+				defer func() { args.clusterAdminPassword = "" }()
+				command := buildCommand(clusterConfig, operatorRolesPrefix,
+					expectedOperatorRolePath, userSelectedAvailabilityZones,
+					defaultMachinePoolLabels, argsDotProperties)
+				Expect(command).To(ContainSubstring(
+					"--cluster-admin-password \"<redacted>\""))
+				Expect(command).To(ContainSubstring("--cluster-admin-user my-admin"))
+				Expect(command).NotTo(ContainSubstring("CustomPass789!"))
+			})
+		})
 	})
+
 	Context("build tags command", func() {
 		When("tag key or values DO contain a colon", func() {
 			It("should build tags command with a space as a delimiter", func() {
